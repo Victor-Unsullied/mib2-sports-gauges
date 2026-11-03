@@ -1,0 +1,16 @@
+{
+  "schema": "golf.sports.tested-devices/v1",
+  "updated": "2026-11-03",
+  "records": [
+    {
+      "train": "MST2_EU_VW_P0635D",
+      "mu": "0757",
+      "hardware": "Delphi 874B",
+      "device_version_tested": true,
+      "configurable_patch_tested": false,
+      "installation_profile_available": true,
+      "scope_en": "CXSA / 2015: earlier fixed temperature and Sports v7 corrections worked in the car. The v1.0 wizard and selectable combinations have not been tested in the car.",
+      "scope_tr": "CXSA / 2015: önceki sabit sıcaklık ve Sports v7 düzeltmeleri araçta çalıştı. v1.0 sihirbazı ve seçilebilir kombinasyonlar henüz araçta denenmedi."
+    }
+  ]
+}

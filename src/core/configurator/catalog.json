@@ -1,0 +1,132 @@
+{
+  "schema": "golf.sports.selection/v5",
+  "title": "Sports Gauge Configurator",
+  "compatibility": "Delphi 874B / MST2_EU_VW_P0635D / MU0757",
+  "defaults": {
+    "oil_temperature_fix": false,
+    "coolant_temperature_fix": false,
+    "enable_torque_gauge": false,
+    "power_source": "factory",
+    "needle_smoothing": "none",
+    "power_unit": "factory",
+    "enable_boost_gauge": true,
+    "enable_gmeter_gauge": true,
+    "enable_coolant_gauge": true,
+    "enable_power_gauge": true,
+    "enable_oil_gauge": true,
+    "torque_min": null,
+    "torque_max": null,
+    "power_min": null,
+    "power_max": null
+  },
+  "checkboxes": [
+    {
+      "id": "oil_temperature_fix",
+      "label": "Oil Temperature Fix",
+      "label_tr": "Yağ Sıcaklığı Düzeltmesi",
+      "group": "fixes"
+    },
+    {
+      "id": "coolant_temperature_fix",
+      "label": "Coolant Temperature Fix",
+      "label_tr": "Soğutma Suyu Sıcaklığı Düzeltmesi",
+      "group": "fixes"
+    },
+    {
+      "id": "enable_boost_gauge",
+      "label": "Boost Pressure",
+      "label_tr": "Turbo Basıncı",
+      "group": "gauges"
+    },
+    {
+      "id": "enable_gmeter_gauge",
+      "label": "G-meter",
+      "label_tr": "G Kuvveti",
+      "group": "gauges"
+    },
+    {
+      "id": "enable_coolant_gauge",
+      "label": "Coolant Temperature",
+      "label_tr": "Soğutma Suyu Sıcaklığı",
+      "group": "gauges"
+    },
+    {
+      "id": "enable_power_gauge",
+      "label": "Engine Power",
+      "label_tr": "Motor Gücü",
+      "group": "gauges"
+    },
+    {
+      "id": "enable_oil_gauge",
+      "label": "Oil Temperature",
+      "label_tr": "Yağ Sıcaklığı",
+      "group": "gauges"
+    },
+    {
+      "id": "enable_torque_gauge",
+      "label": "Torque",
+      "label_tr": "Tork",
+      "group": "gauges",
+      "note": "Requires vehicle support",
+      "note_tr": "Araç desteği gerektirir"
+    }
+  ],
+  "dropdowns": [
+    {
+      "id": "power_source",
+      "label": "Engine Power Source",
+      "choices": [
+        {
+          "value": "factory",
+          "label": "Standard Behaviour (Factory)",
+          "label_tr": "Standart Davranış (Fabrika)"
+        },
+        {
+          "value": "torque",
+          "label": "Calculate from torque",
+          "label_tr": "Torktan hesapla"
+        }
+      ],
+      "label_tr": "Motor Gücü Kaynağı"
+    },
+    {
+      "id": "needle_smoothing",
+      "label": "Needle Smoothing",
+      "choices": [
+        {
+          "value": "none",
+          "label": "No smoothing",
+          "label_tr": "Yumuşatma yok"
+        },
+        {
+          "value": "stock500",
+          "label": "Stock smoothing (500 ms)",
+          "label_tr": "Fabrika yumuşatması (500 ms)"
+        }
+      ],
+      "label_tr": "İbre Yumuşatma"
+    },
+    {
+      "id": "power_unit",
+      "label": "Engine Power Unit",
+      "choices": [
+        {
+          "value": "factory",
+          "label": "Factory setting",
+          "label_tr": "Fabrika ayarı"
+        },
+        {
+          "value": "hp",
+          "label": "HP",
+          "label_tr": "HP"
+        },
+        {
+          "value": "kw",
+          "label": "KW",
+          "label_tr": "KW"
+        }
+      ],
+      "label_tr": "Motor Gücü Birimi"
+    }
+  ]
+}

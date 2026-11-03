@@ -1,0 +1,185 @@
+{
+  "version": "1.0",
+  "files": [
+    {
+      "path": ".github/ISSUE_TEMPLATE/bug_report.yml",
+      "bytes": 1866,
+      "sha256": "ee61af60b045599cc5a7ae03ea6346371e1c1c95558bda4cb43cadd0a480df74"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/compatibility_report.yml",
+      "bytes": 1830,
+      "sha256": "a3dea89629491d6df7b0950ff1d8998520e2fc77e81a9254cd7a6866986f1270"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/config.yml",
+      "bytes": 445,
+      "sha256": "c499e675afe263c40bccd43679abc96947692f928f0e57a9b057407d215295bd"
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 51,
+      "sha256": "5af06d60ddfe8726f07ff199643367816e768157cadf175298bb7767e766bf6f"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "bytes": 1011,
+      "sha256": "de39b9732179ceeef1ccb1d782e31521941f550f6f4c279b0e9ed114e5fd6f7c"
+    },
+    {
+      "path": "README.md",
+      "bytes": 6512,
+      "sha256": "8b43f4af34c81ef49c4f2d95cdffc4a0ada96ed83f6434a9b20a42137a1b65b2"
+    },
+    {
+      "path": "VERSION",
+      "bytes": 4,
+      "sha256": "5717e7c840171019a4eeab5b79a7f894a4986eaff93d04ec5b12c9a189f594bf"
+    },
+    {
+      "path": "configure.py",
+      "bytes": 132,
+      "sha256": "c7ad2847f65735fdc4c223ba145fe507a6d3dd6a417b3da58900919d7d0eeae0"
+    },
+    {
+      "path": "install.py",
+      "bytes": 147,
+      "sha256": "023ba1be5805df97b04fedc72ecf454be61296ffb8a8c9560cadc14677cec4bd"
+    },
+    {
+      "path": "src/__init__.py",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/backend.py",
+      "bytes": 1179,
+      "sha256": "7dece1b90fa405312a61138acf54eac53b070b2f817a8718d3bf0bc3c1ce980b"
+    },
+    {
+      "path": "src/config.py",
+      "bytes": 6018,
+      "sha256": "ea8709cdaa79304bcf52e70d0f14051356b52bb17cdabcddd1f5199048471e89"
+    },
+    {
+      "path": "src/core/TESTED_DEVICES.json",
+      "bytes": 682,
+      "sha256": "a1e41881a360f95ec268cba4127503a601c53eba2b515e5bb6c606b6209b93cc"
+    },
+    {
+      "path": "src/core/__init__.py",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/core/compatibility.py",
+      "bytes": 6291,
+      "sha256": "6b77786498d0fb7c4b2a57d4bc361b3457c19d640c81925ed5800fc5d025183d"
+    },
+    {
+      "path": "src/core/configurator/catalog.json",
+      "bytes": 3246,
+      "sha256": "3620927b3f5378006f18ace9e9aed1d8dcaa77dd93560e3236e6941406332186"
+    },
+    {
+      "path": "src/core/selection.py",
+      "bytes": 89,
+      "sha256": "d48b0c9d8f0e90ee5d7aa48cf50dc65303f9d4cd01869b17c98c4201bb5e22ae"
+    },
+    {
+      "path": "src/core/selection_v2.py",
+      "bytes": 9255,
+      "sha256": "ff80e6a0071e172e7c3c428bb0d9339751229883490322cfa2e524be58cfebd2"
+    },
+    {
+      "path": "src/core/tools/configurable/BUILD.json",
+      "bytes": 49210,
+      "sha256": "3fd1b640b6e1c57b329253b846e4fe5618201c43d0978daebfe54b57a176aba0"
+    },
+    {
+      "path": "src/core/tools/configurable/components.jar",
+      "bytes": 25709,
+      "sha256": "b6ec790a09bc73e9e50b9aceca00f43a6cf76f4dde6ecc4464f8c09efc51377b"
+    },
+    {
+      "path": "src/core/tools/configurable/device.py",
+      "bytes": 2218,
+      "sha256": "e1cfec85752113bb3cdd98dd9c8723bd68b594ca84f9174afd55881be05152d7"
+    },
+    {
+      "path": "src/core/tools/configurable/protected-files.json",
+      "bytes": 432,
+      "sha256": "f50a27cf19922f211391cf1daf054c83a5178cdf25f2c2ef510fa70040be750a"
+    },
+    {
+      "path": "src/core/tools/configurable/runtime.py",
+      "bytes": 24217,
+      "sha256": "d705f5445a1d82eb1efc9b07350d7046b2574ff81d111c6dd5f91554b0a6e316"
+    },
+    {
+      "path": "src/core/tools/configurable/sport-ui-factory.jar",
+      "bytes": 85576,
+      "sha256": "d71347ecc9b909c705eb3df24061487464663fc9d0b5771d6ad974380166bc49"
+    },
+    {
+      "path": "src/core/tools/configurable/sport-ui-needle.jar",
+      "bytes": 88070,
+      "sha256": "67fb797d742dbfae153a11d7457ccb8da1ca68326e6d16fcbb3682546849456a"
+    },
+    {
+      "path": "src/core/tools/transport.py",
+      "bytes": 4146,
+      "sha256": "bcc38583c5908627d85b6481fdab02b7937c0d329ebb375da69c7ac166168cfa"
+    },
+    {
+      "path": "src/gui.py",
+      "bytes": 7365,
+      "sha256": "a7d0a51f88ad64c7f2e115c18a9e25a68c1ae659ad24fd58bdf0a1a78c74c556"
+    },
+    {
+      "path": "src/integrity.py",
+      "bytes": 1105,
+      "sha256": "0f66fdd9489dc064c6f86d834e4bbcc65dc42e02316525e9ba031dabdc0e2c46"
+    },
+    {
+      "path": "src/native/golf/sportconfig/GaugeOptions.java",
+      "bytes": 6458,
+      "sha256": "5a38035126ae6334cc165659d530b4de44e55511ae698abfb866e4ba6d54b6d4"
+    },
+    {
+      "path": "src/native/golf/sportfix/SportSkinLoader.java",
+      "bytes": 1508,
+      "sha256": "7606efc4784f8ab4abb95f2585be13c97beebada6f2b602210a7089ea100706a"
+    },
+    {
+      "path": "src/native/golf/sportfix/SportsBootstrap.java",
+      "bytes": 4239,
+      "sha256": "46350e363b07378bcb003ccf4f809fb917c1661f810cf1932062a77862792b36"
+    },
+    {
+      "path": "src/native/golf/sporttrial/CsdTorque.java",
+      "bytes": 23235,
+      "sha256": "ecf34b380be6d0600ccfe8b07488809ab187bb127bffa8e91b71d19dd56293c6"
+    },
+    {
+      "path": "src/native/golf/sporttrial/NeedleSmoothing.java",
+      "bytes": 2127,
+      "sha256": "27dd3f2b4d2acaded64f01ab7a9988768a2e24fcad6f3a351f487421f3985d96"
+    },
+    {
+      "path": "src/native/golf/temperaturefix/TemperatureBridge.java",
+      "bytes": 7543,
+      "sha256": "5d881863877c40c179a82b61c27688aa939c32b14a2d0ccbaf519cbd9b04309e"
+    },
+    {
+      "path": "src/wizard.py",
+      "bytes": 14154,
+      "sha256": "b881249e89f73f34fe32e0e2a12c36bb2bac629b2ccb166b4e3b365b4fc8c0cf"
+    },
+    {
+      "path": "tests/test_config_and_wizard.py",
+      "bytes": 7392,
+      "sha256": "ba3b3fe6c09e264a4c1f04abe5494ff87166f02df473d22422bbc9b109703093"
+    }
+  ]
+}

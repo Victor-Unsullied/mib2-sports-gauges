@@ -1,0 +1,53 @@
+name: Bug report
+description: Report a problem with configuration, installation or a gauge.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe what happened without repeating a failed installation. Do not attach your state folder, backups, credentials, VIN or other personal data. Share only the relevant error text after reviewing it.
+  - type: input
+    id: version
+    attributes:
+      label: Project version
+      placeholder: v1.0
+    validations:
+      required: true
+  - type: input
+    id: vehicle
+    attributes:
+      label: Engine code and model year
+      placeholder: CXSA / 2015
+    validations:
+      required: true
+  - type: input
+    id: unit
+    attributes:
+      label: Head unit, Train and MU
+      placeholder: Delphi 874B / MST2_EU_VW_P0635D / 0757
+    validations:
+      required: true
+  - type: textarea
+    id: selected
+    attributes:
+      label: Selected corrections and settings
+      description: List the fixes, visible gauges, power source/unit, smoothing and custom scale limits you selected.
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened and what did you expect?
+      description: Include the installation stage, error message and steps that led to the issue. Do not rerun an unsafe step just to reproduce it.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Computer and connection
+      description: Windows version, Python version, adapter model/revision and whether service access still works. Omit passwords and private network details.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Relevant error text or screenshots
+      description: Review attachments for personal information. Do not upload the complete state folder or factory files.

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mib2-sports version="1.0" language="en">
+  <device train="" mu="" />
+  <options>
+    <option name="oil_temperature_fix" value="false" />
+    <option name="coolant_temperature_fix" value="false" />
+    <option name="enable_torque_gauge" value="false" />
+    <option name="power_source" value="factory" />
+    <option name="needle_smoothing" value="none" />
+    <option name="power_unit" value="factory" />
+    <option name="enable_boost_gauge" value="true" />
+    <option name="enable_gmeter_gauge" value="true" />
+    <option name="enable_coolant_gauge" value="true" />
+    <option name="enable_power_gauge" value="true" />
+    <option name="enable_oil_gauge" value="true" />
+    <option name="torque_min" value="auto" />
+    <option name="torque_max" value="auto" />
+    <option name="power_min" value="auto" />
+    <option name="power_max" value="auto" />
+  </options>
+</mib2-sports>

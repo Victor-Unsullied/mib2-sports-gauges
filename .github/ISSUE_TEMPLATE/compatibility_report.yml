@@ -1,0 +1,55 @@
+name: Compatibility report
+description: Share which gauges work or do not work on your car.
+title: "[Compatibility]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Successful and unsuccessful results are both useful. Report only what you actually tested. A working display does not establish measurement accuracy or compatibility with other cars.
+  - type: input
+    id: version
+    attributes:
+      label: Project version
+      placeholder: v1.0
+    validations:
+      required: true
+  - type: input
+    id: engine
+    attributes:
+      label: Engine code and model year
+      placeholder: CXSA / 2015
+    validations:
+      required: true
+  - type: input
+    id: unit
+    attributes:
+      label: Head unit, Train and MU
+      placeholder: Delphi 874B / MST2_EU_VW_P0635D / 0757
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Selected corrections and settings
+      description: List temperature fixes, visible gauges, power source/unit, smoothing and custom scale limits.
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Results for each gauge
+      description: Say whether each gauge already worked before, works after the correction, still fails or was not tested. Distinguish a changing number from a reading checked against another instrument.
+      value: |
+        Oil temperature:
+        Coolant temperature:
+        Power:
+        Torque:
+        Boost pressure (no correction in v1.0):
+        Other observations:
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Optional evidence
+      description: Photos or short observations are welcome. Do not include VIN, registration, location, credentials, the state folder or factory backups.
