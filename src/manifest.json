@@ -3,13 +3,13 @@
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/bug_report.yml",
-      "bytes": 1866,
-      "sha256": "ee61af60b045599cc5a7ae03ea6346371e1c1c95558bda4cb43cadd0a480df74"
+      "bytes": 1893,
+      "sha256": "8fe72a656d1e0fe4b3466cc5b73e53e1411bee016920a605809cecdc0a515651"
     },
     {
       "path": ".github/ISSUE_TEMPLATE/compatibility_report.yml",
-      "bytes": 1830,
-      "sha256": "a3dea89629491d6df7b0950ff1d8998520e2fc77e81a9254cd7a6866986f1270"
+      "bytes": 2840,
+      "sha256": "beccafb47b36357474f2426f40ac42004f91207ab20612ba3032b18fac49c4e5"
     },
     {
       "path": ".github/ISSUE_TEMPLATE/config.yml",
@@ -28,8 +28,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 6512,
-      "sha256": "8b43f4af34c81ef49c4f2d95cdffc4a0ada96ed83f6434a9b20a42137a1b65b2"
+      "bytes": 6878,
+      "sha256": "f1e01366acc523bdac90f1a81078e7e4e5847757cc87f6d69e478c063a0a1f4c"
     },
     {
       "path": "VERSION",

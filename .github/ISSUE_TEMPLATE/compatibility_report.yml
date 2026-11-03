@@ -1,16 +1,26 @@
-name: Compatibility report
-description: Share which gauges work or do not work on your car.
+name: Compatibility / support request
+description: Request support for an engine or firmware version, or share vehicle test results.
 title: "[Compatibility]: "
 body:
   - type: markdown
     attributes:
       value: |
-        Successful and unsuccessful results are both useful. Report only what you actually tested. A working display does not establish measurement accuracy or compatibility with other cars.
+        Use this public issue to request support for a vehicle or head-unit software version, or share an existing test result. You do not need to attempt installation to request support. Requests help plan development but do not guarantee inclusion in a release. Do not include credentials, VIN, registration, private backups or your state folder.
+  - type: dropdown
+    id: request_type
+    attributes:
+      label: Type of submission
+      options:
+        - Support request (not tested)
+        - Vehicle test result
+    validations:
+      required: true
   - type: input
     id: version
     attributes:
       label: Project version
-      placeholder: v1.0
+      description: Enter the version you are using or requesting support for. Use "future release" if no specific version applies.
+      placeholder: v1.0 or future release
     validations:
       required: true
   - type: input
@@ -24,32 +34,36 @@ body:
     id: unit
     attributes:
       label: Head unit, Train and MU
+      description: Copy the versions from the system information screen. Mark any unknown information as unknown.
       placeholder: Delphi 874B / MST2_EU_VW_P0635D / 0757
+    validations:
+      required: true
+  - type: textarea
+    id: request
+    attributes:
+      label: Requested support or test summary
+      description: State which gauges or corrections you would like supported, or summarize the result of an existing test. Distinguish unsupported firmware from a fault in an otherwise supported setup.
     validations:
       required: true
   - type: textarea
     id: config
     attributes:
-      label: Selected corrections and settings
-      description: List temperature fixes, visible gauges, power source/unit, smoothing and custom scale limits.
-    validations:
-      required: true
+      label: Selected corrections and settings (if tested)
+      description: Leave blank for an untested request. Otherwise list temperature fixes, visible gauges, power source/unit, smoothing and custom limits.
   - type: textarea
     id: result
     attributes:
-      label: Results for each gauge
-      description: Say whether each gauge already worked before, works after the correction, still fails or was not tested. Distinguish a changing number from a reading checked against another instrument.
-      value: |
+      label: Results for each gauge (if tested)
+      description: Leave blank if untested. For each gauge, state whether it already worked, works after the correction, still fails or was not tested. A changing number alone does not verify accuracy.
+      placeholder: |
         Oil temperature:
         Coolant temperature:
         Power:
         Torque:
         Boost pressure (no correction in v1.0):
         Other observations:
-    validations:
-      required: true
   - type: textarea
     id: evidence
     attributes:
       label: Optional evidence
-      description: Photos or short observations are welcome. Do not include VIN, registration, location, credentials, the state folder or factory backups.
+      description: Review screenshots and error text before posting. Do not upload factory files, backups, the state folder, credentials or personal information.

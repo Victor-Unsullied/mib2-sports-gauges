@@ -88,7 +88,7 @@ The wizard restores the saved previous state and checks the next boot. It uses t
 
 ## Report results
 
-For English reports, use [GitHub Issues](https://github.com/Victor-Unsullied/mib2-sports-gauges/issues/new/choose): choose **Bug report** for a problem or **Compatibility report** to share which gauges work on your car.
+Use the public [GitHub Issues tracker](https://github.com/Victor-Unsullied/mib2-sports-gauges/issues/new/choose). Choose **Bug report** for a problem with configuration, installation or gauge behaviour. Choose **Compatibility / support request** to request support for an engine, model year, head unit, Train or MU version, or share existing test results. State the relevant project version and the support required. An installation attempt is not required to open a request, and a request does not guarantee inclusion in a particular release. Submitted issues are visible to everyone.
 
 You can also post successful and unsuccessful results in the [Golftutkusu topic](https://www.golftutkusu.com/topic/29132-golf-7-mib2-sport-hmi-euro-5-araclarda-spor-gostergelerini-calistirma/): engine code, model year, head-unit model, Train, MU, project version and the fixes selected. Remove personal information before sharing logs.
 
