@@ -8,7 +8,7 @@ from .config import ROOT
 def verify(root=ROOT):
     root = Path(root).resolve()
     manifest = json.loads((root / 'src/manifest.json').read_text(encoding='utf-8'))
-    if manifest['version'] != '1.0.1':
+    if manifest['version'] != '1.0.0':
         raise ValueError('Unknown package version.')
     seen = set()
     for row in manifest['files']:

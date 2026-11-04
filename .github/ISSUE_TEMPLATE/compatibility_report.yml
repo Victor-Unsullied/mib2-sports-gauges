@@ -20,7 +20,7 @@ body:
     attributes:
       label: Project version
       description: Enter the version you are using or requesting support for. Use "future release" if no specific version applies.
-      placeholder: v1.0 or future release
+      placeholder: v1.0.0 or future release
     validations:
       required: true
   - type: input
@@ -60,7 +60,7 @@ body:
         Coolant temperature:
         Power:
         Torque:
-        Boost pressure (no correction in v1.0):
+        Boost pressure (no correction in v1.0.0):
         Other observations:
   - type: textarea
     id: evidence

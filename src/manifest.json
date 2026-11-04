@@ -1,15 +1,15 @@
 {
-  "version": "1.0.1",
+  "version": "1.0.0",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/bug_report.yml",
-      "bytes": 1893,
-      "sha256": "8fe72a656d1e0fe4b3466cc5b73e53e1411bee016920a605809cecdc0a515651"
+      "bytes": 1895,
+      "sha256": "9d77af8b9e9cc4da3f6aea1a80b33eaa9cc35a5fdfa6a8c7f5568746a3e125a3"
     },
     {
       "path": ".github/ISSUE_TEMPLATE/compatibility_report.yml",
-      "bytes": 2840,
-      "sha256": "beccafb47b36357474f2426f40ac42004f91207ab20612ba3032b18fac49c4e5"
+      "bytes": 2844,
+      "sha256": "2be31729c310d124b6694c092b67a4f9b4726509a1d39f763f70ac60c3045780"
     },
     {
       "path": ".github/ISSUE_TEMPLATE/config.yml",
@@ -22,19 +22,24 @@
       "sha256": "5af06d60ddfe8726f07ff199643367816e768157cadf175298bb7767e766bf6f"
     },
     {
+      "path": "AGENTS.md",
+      "bytes": 2669,
+      "sha256": "881b115bcbf0726f3101a53df4b882baba40d67d0674c3c1ca7e2f33de98986d"
+    },
+    {
       "path": "CHANGELOG.md",
-      "bytes": 1165,
-      "sha256": "a755a6db2b34835599535942a717e2e41534185de78196148f0d8926cd7aafdd"
+      "bytes": 618,
+      "sha256": "0579525a95c392259bbae9624fca60d1a7bedc55987effab60791f3f62038840"
     },
     {
       "path": "README.md",
-      "bytes": 6839,
-      "sha256": "f3c34185dc98ab02291b2d8c5cf569ea76a8c481168fb7fd03cc06f0c1601992"
+      "bytes": 7100,
+      "sha256": "ee0873887dbbced258314321b84385f96062af720bfd50dc07ee5876a0e2141e"
     },
     {
       "path": "VERSION",
       "bytes": 6,
-      "sha256": "44e161e4495cac2cf7858043e9e6418e9579f0ddcfae826f9a372622968ce066"
+      "sha256": "59854984853104df5c353e2f681a15fc7924742f9a2e468c29af248dce45ce03"
     },
     {
       "path": "configure.py",
@@ -44,7 +49,7 @@
     {
       "path": "install.py",
       "bytes": 149,
-      "sha256": "1be07755c001304e8028e98f6e2e20093b16913e24bcbf550a5d20e25523ed45"
+      "sha256": "db6ab55f77c6c8f20ced2510390bea23e0f0796412b37f5b9d5fa390b9812d3e"
     },
     {
       "path": "src/__init__.py",
@@ -58,8 +63,8 @@
     },
     {
       "path": "src/config.py",
-      "bytes": 6018,
-      "sha256": "ea8709cdaa79304bcf52e70d0f14051356b52bb17cdabcddd1f5199048471e89"
+      "bytes": 6022,
+      "sha256": "ee7aa87a87bef1edcc53781d17ab1965582835175423f979d0f2e68ca18e97a2"
     },
     {
       "path": "src/core/TESTED_DEVICES.json",
@@ -74,7 +79,7 @@
     {
       "path": "src/core/compatibility.py",
       "bytes": 5895,
-      "sha256": "b610078576de31f34a97c2d0576bf628c52d7b6f573cde274cf09447d202225f"
+      "sha256": "79783014b69706581af7d3f69b2f7688e5f466de090c1d6a8ad1d715963ae2eb"
     },
     {
       "path": "src/core/configurator/catalog.json",
@@ -134,12 +139,12 @@
     {
       "path": "src/gui.py",
       "bytes": 7369,
-      "sha256": "809cd1e0f83f61efe44bf55479dd86a7d51dc97ff9c9001fe98bd68efb53f894"
+      "sha256": "fea04394a556b09ec944fd912bf89a85bad31efe5f5dffdf086e45d94f1bb538"
     },
     {
       "path": "src/integrity.py",
       "bytes": 1107,
-      "sha256": "4da8cfb1a8dd150556e53eae2881cb1a1510448b4a794f56b75af959e9c7a28d"
+      "sha256": "743fc6dd7fa72c9aa867a2b7784b6ea3ead52b57e1153cf6d3f7f70618726b31"
     },
     {
       "path": "src/native/golf/sportconfig/GaugeOptions.java",

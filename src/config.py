@@ -50,7 +50,7 @@ def parse(data):
         raise ValueError('XML entities and document types are not supported.')
     root = ET.fromstring(data)
     if root.tag != 'mib2-sports' or set(root.attrib) != {'version', 'language'} or root.get('version') != '1.0':
-        raise ValueError('Expected a v1.0 mib2-sports configuration.')
+        raise ValueError('Expected mib2-sports configuration schema 1.0.')
     if [c.tag for c in root] != ['device', 'options'] or (root.text or '').strip():
         raise ValueError('Expected one device followed by one options element.')
     device, settings = root

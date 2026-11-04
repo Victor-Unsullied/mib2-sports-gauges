@@ -2,9 +2,11 @@
 
 Selectable Sport HMI fixes for a **Delphi MIB2**, with an offline configurator and a guided Windows installer.
 
-**Current installer: v1.0.1 (experimental).**
+**Current installer: v1.0.0 (experimental).**
 
 > **USE AT YOUR OWN RISK.** This changes the software in your infotainment unit. Your engine/head-unit combination is probably untested. A failed installation can leave the screen and related functions unavailable, or brick the unit. Repair or replacement may be necessary. A backup is not a guarantee of recovery. You accept the risk and responsibility for using this project.
+
+The repository owner developed this patch for a 2015 Golf 7 Highline with the CXSA engine and manual transmission, after a Delphi MIB2 retrofit left some Sport HMI gauges malfunctioning. The patch is shared so owners with other setups can check compatibility.
 
 ## What it does
 
@@ -15,7 +17,7 @@ Some cars already report some gauges correctly. **Select fixes for the gauges th
 | Oil temperature correction | Working in the earlier fixed setup |
 | Coolant temperature correction | Working in the earlier fixed setup |
 | ECU-based torque display and torque-derived power | Working in the earlier fixed setup |
-| Gauge selection, power unit, custom scales, optional needle smoothing | Available; all v1.0.1 combinations remain untested in a car |
+| Gauge selection, power unit, custom scales, optional needle smoothing | Available; all v1.0.0 combinations remain untested in a car |
 | Boost-pressure correction | **Not implemented** |
 
 Only the **power unit** is selectable. Existing gauges use the head unit's unit settings. The added torque gauge uses Nm. The optional limits change the displayed scale, not vehicle data.
@@ -25,7 +27,7 @@ Only the **power unit** is selectable. Existing gauges use the head unit's unit 
 | Head unit | Software train | MU | Project version / test scope |
 | --- | --- | --- | --- |
 | Delphi 874B | MST2_EU_VW_P0635D | 0757 | temperature-hook-v3 + Sports v7; owner-reported in-car result |
-| Delphi 874B | MST2_EU_VW_P0635D | 0757 | **v1.0.1:** offline checks; guided installer and selectable combinations not tested in the car |
+| Delphi 874B | MST2_EU_VW_P0635D | 0757 | **v1.0.0:** offline checks; guided installer and selectable combinations not tested in the car |
 | All other head units / trains / MU versions | — | — | **Not tested.** Review the installer warning. |
 
 | Engine / model year | Oil | Coolant | Power | Torque | Boost fix |
@@ -33,7 +35,7 @@ Only the **power unit** is selectable. Existing gauges use the head unit's unit 
 | CXSA 1.4 TSI / 2015 | ✓ | ✓ | ✓ | ✓ | ✗ |
 | All other engines / years | Not tested | Not tested | Not tested | Not tested | ✗ Not implemented |
 
-The checkmarks refer to the earlier fixed setup on the owner's car. They are not validation of every v1.0.1 setting. Independent Nm/hp calibration has not been verified. An untested Train/MU prompts a warning. The installer checks the actual files on the unit and stops before writing if they are unrecognized.
+The checkmarks refer to the earlier fixed setup on the owner's car. They are not validation of every v1.0.0 setting. Independent Nm/hp calibration has not been verified. An untested Train/MU prompts a warning. The installer checks the actual files on the unit and stops before writing if they are unrecognized.
 
 ## Requirements
 
@@ -43,7 +45,7 @@ The checkmarks refer to the earlier fixed setup on the owner's car. They are not
 
 ## Configure
 
-Download and extract the [v1.0.1 installer](https://utkulekesiz.com/assets/mib2-sports/v1.0.1/mib2-sports-gauges-v1.0.1.zip).
+Download and extract the [v1.0.0 installer](https://utkulekesiz.com/assets/mib2-sports/v1.0.0/mib2-sports-gauges-v1.0.0.zip).
 
 Open a terminal in the extracted folder and run:
 

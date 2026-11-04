@@ -5,7 +5,7 @@ from pathlib import Path
 import re
 
 ROOT = Path(__file__).resolve().parent
-NOTICE_VERSION = '2026-11-04.v1.0.1'
+NOTICE_VERSION = '2026-11-04.v1.0.0'
 REGISTRY = json.loads((ROOT / 'TESTED_DEVICES.json').read_text(encoding='utf-8'))
 
 
