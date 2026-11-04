@@ -93,8 +93,8 @@
     },
     {
       "path": "src/core/tools/configurable/BUILD.json",
-      "bytes": 49210,
-      "sha256": "3fd1b640b6e1c57b329253b846e4fe5618201c43d0978daebfe54b57a176aba0"
+      "bytes": 49010,
+      "sha256": "c394054a4449832ce977e010657051c0ae53330472c89def888d244aa06a75e5"
     },
     {
       "path": "src/core/tools/configurable/components.jar",
@@ -103,13 +103,13 @@
     },
     {
       "path": "src/core/tools/configurable/device.py",
-      "bytes": 2218,
-      "sha256": "e1cfec85752113bb3cdd98dd9c8723bd68b594ca84f9174afd55881be05152d7"
+      "bytes": 2159,
+      "sha256": "e5579cac3af819d26200db200c6dbea2a7fd4d543e88f6f6fdc899ecfb4d7f1e"
     },
     {
       "path": "src/core/tools/configurable/protected-files.json",
-      "bytes": 432,
-      "sha256": "f50a27cf19922f211391cf1daf054c83a5178cdf25f2c2ef510fa70040be750a"
+      "bytes": 426,
+      "sha256": "d9cf8414b624e077f148ac5c027914ad8bfa0144d02cd0c0a8845576d3fb668a"
     },
     {
       "path": "src/core/tools/configurable/runtime.py",
@@ -148,18 +148,18 @@
     },
     {
       "path": "src/native/golf/sportfix/SportSkinLoader.java",
-      "bytes": 1508,
-      "sha256": "7606efc4784f8ab4abb95f2585be13c97beebada6f2b602210a7089ea100706a"
+      "bytes": 1481,
+      "sha256": "46fac1dbc89685fabcee3199e0895f52fea7083c744f0ed1dadfeafd97e7498e"
     },
     {
       "path": "src/native/golf/sportfix/SportsBootstrap.java",
-      "bytes": 4239,
-      "sha256": "46350e363b07378bcb003ccf4f809fb917c1661f810cf1932062a77862792b36"
+      "bytes": 4171,
+      "sha256": "a66e6f789c71b839e80c5f1d760b54094a745141d57e140838f2e096b478d72f"
     },
     {
       "path": "src/native/golf/sporttrial/CsdTorque.java",
-      "bytes": 23235,
-      "sha256": "ecf34b380be6d0600ccfe8b07488809ab187bb127bffa8e91b71d19dd56293c6"
+      "bytes": 22759,
+      "sha256": "96d85431a7676191f001144e2c808fb44e7165b0166dacf8a8c08eba74c8f506"
     },
     {
       "path": "src/native/golf/sporttrial/NeedleSmoothing.java",
@@ -168,8 +168,8 @@
     },
     {
       "path": "src/native/golf/temperaturefix/TemperatureBridge.java",
-      "bytes": 7543,
-      "sha256": "5d881863877c40c179a82b61c27688aa939c32b14a2d0ccbaf519cbd9b04309e"
+      "bytes": 7372,
+      "sha256": "af923fcb9e6574408d492f950ae84d029a003e15ac743110082b648103e39a81"
     },
     {
       "path": "src/wizard.py",
