@@ -12,7 +12,7 @@ class Configurator:
         self.current = config.read(self.path) if self.path.exists() else config.blank()
         self.lang = self.current['language']
         self.vars = {}
-        self.window.title('MIB2 Sports Gauges v1.0')
+        self.window.title('MIB2 Sports Gauges v1.0.1')
         self.window.minsize(680, 620)
         self.render()
 
@@ -52,7 +52,7 @@ class Configurator:
         frame.columnconfigure(0, weight=1)
         bar = ttk.Frame(frame)
         bar.grid(row=0, column=0, sticky='ew')
-        ttk.Label(bar, text='MIB2 Sports Gauges · v1.0', font=('', 16, 'bold')).pack(side='left')
+        ttk.Label(bar, text='MIB2 Sports Gauges · v1.0.1', font=('', 16, 'bold')).pack(side='left')
         for lang, name in [('en', 'English'), ('tr', 'Türkçe')]:
             ttk.Button(bar, text=name, command=lambda l=lang: self.switch(l)).pack(side='right')
         ttk.Label(frame, text=self.t('Choose fixes only for gauges that do not work correctly in your car.\nLeave working gauges at their factory settings.', 'Yalnızca aracınızda çalışmayan veya yanlış gösteren göstergeleri düzeltin.\nDüzgün çalışan göstergeler için fabrika ayarlarını koruyun.'), wraplength=650).grid(row=1, column=0, sticky='w', pady=10)

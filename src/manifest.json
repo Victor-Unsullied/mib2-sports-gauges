@@ -1,5 +1,5 @@
 {
-  "version": "1.0",
+  "version": "1.0.1",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/bug_report.yml",
@@ -23,18 +23,18 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 1011,
-      "sha256": "de39b9732179ceeef1ccb1d782e31521941f550f6f4c279b0e9ed114e5fd6f7c"
+      "bytes": 1165,
+      "sha256": "a755a6db2b34835599535942a717e2e41534185de78196148f0d8926cd7aafdd"
     },
     {
       "path": "README.md",
-      "bytes": 6878,
-      "sha256": "f1e01366acc523bdac90f1a81078e7e4e5847757cc87f6d69e478c063a0a1f4c"
+      "bytes": 6839,
+      "sha256": "f3c34185dc98ab02291b2d8c5cf569ea76a8c481168fb7fd03cc06f0c1601992"
     },
     {
       "path": "VERSION",
-      "bytes": 4,
-      "sha256": "5717e7c840171019a4eeab5b79a7f894a4986eaff93d04ec5b12c9a189f594bf"
+      "bytes": 6,
+      "sha256": "44e161e4495cac2cf7858043e9e6418e9579f0ddcfae826f9a372622968ce066"
     },
     {
       "path": "configure.py",
@@ -43,8 +43,8 @@
     },
     {
       "path": "install.py",
-      "bytes": 147,
-      "sha256": "023ba1be5805df97b04fedc72ecf454be61296ffb8a8c9560cadc14677cec4bd"
+      "bytes": 149,
+      "sha256": "1be07755c001304e8028e98f6e2e20093b16913e24bcbf550a5d20e25523ed45"
     },
     {
       "path": "src/__init__.py",
@@ -73,8 +73,8 @@
     },
     {
       "path": "src/core/compatibility.py",
-      "bytes": 6291,
-      "sha256": "6b77786498d0fb7c4b2a57d4bc361b3457c19d640c81925ed5800fc5d025183d"
+      "bytes": 5895,
+      "sha256": "b610078576de31f34a97c2d0576bf628c52d7b6f573cde274cf09447d202225f"
     },
     {
       "path": "src/core/configurator/catalog.json",
@@ -113,8 +113,8 @@
     },
     {
       "path": "src/core/tools/configurable/runtime.py",
-      "bytes": 24217,
-      "sha256": "d705f5445a1d82eb1efc9b07350d7046b2574ff81d111c6dd5f91554b0a6e316"
+      "bytes": 24216,
+      "sha256": "d6a9144f14ca6dea3661842463d24d5a795b5679e2a0166ccbc3c0980953336b"
     },
     {
       "path": "src/core/tools/configurable/sport-ui-factory.jar",
@@ -133,13 +133,13 @@
     },
     {
       "path": "src/gui.py",
-      "bytes": 7365,
-      "sha256": "a7d0a51f88ad64c7f2e115c18a9e25a68c1ae659ad24fd58bdf0a1a78c74c556"
+      "bytes": 7369,
+      "sha256": "809cd1e0f83f61efe44bf55479dd86a7d51dc97ff9c9001fe98bd68efb53f894"
     },
     {
       "path": "src/integrity.py",
-      "bytes": 1105,
-      "sha256": "0f66fdd9489dc064c6f86d834e4bbcc65dc42e02316525e9ba031dabdc0e2c46"
+      "bytes": 1107,
+      "sha256": "4da8cfb1a8dd150556e53eae2881cb1a1510448b4a794f56b75af959e9c7a28d"
     },
     {
       "path": "src/native/golf/sportconfig/GaugeOptions.java",
@@ -173,13 +173,13 @@
     },
     {
       "path": "src/wizard.py",
-      "bytes": 14154,
-      "sha256": "b881249e89f73f34fe32e0e2a12c36bb2bac629b2ccb166b4e3b365b4fc8c0cf"
+      "bytes": 14480,
+      "sha256": "39fb108ab4189c82668ed0674943653920d0e9670007e992fc57030bf393b042"
     },
     {
       "path": "tests/test_config_and_wizard.py",
-      "bytes": 7392,
-      "sha256": "ba3b3fe6c09e264a4c1f04abe5494ff87166f02df473d22422bbc9b109703093"
+      "bytes": 7763,
+      "sha256": "c8890491aa089229923c778d8ce17e62fb95914874af754544c71c7fe8989b88"
     }
   ]
 }

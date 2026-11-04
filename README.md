@@ -2,7 +2,7 @@
 
 Selectable Sport HMI fixes for a **Delphi MIB2**, with an offline configurator and a guided Windows installer.
 
-**Current release: v1.0 — experimental.** This is the first public package version. It does not mean every option has been tested in a car.
+**Current installer: v1.0.1 (experimental).**
 
 > **USE AT YOUR OWN RISK.** This changes the software in your infotainment unit. Your engine/head-unit combination is probably untested. A failed installation can leave the screen and related functions unavailable, or brick the unit. Repair or replacement may be necessary. A backup is not a guarantee of recovery. You accept the risk and responsibility for using this project.
 
@@ -15,7 +15,7 @@ Some cars already report some gauges correctly. **Select fixes for the gauges th
 | Oil temperature correction | Working in the earlier fixed setup |
 | Coolant temperature correction | Working in the earlier fixed setup |
 | ECU-based torque display and torque-derived power | Working in the earlier fixed setup |
-| Gauge selection, power unit, custom scales, optional needle smoothing | Available; all v1.0 combinations remain untested in a car |
+| Gauge selection, power unit, custom scales, optional needle smoothing | Available; all v1.0.1 combinations remain untested in a car |
 | Boost-pressure correction | **Not implemented** |
 
 Only the **power unit** is selectable. Existing gauges use the head unit's unit settings. The added torque gauge uses Nm. The optional limits change the displayed scale, not vehicle data.
@@ -25,15 +25,15 @@ Only the **power unit** is selectable. Existing gauges use the head unit's unit 
 | Head unit | Software train | MU | Project version / test scope |
 | --- | --- | --- | --- |
 | Delphi 874B | MST2_EU_VW_P0635D | 0757 | temperature-hook-v3 + Sports v7; owner-reported in-car result |
-| Delphi 874B | MST2_EU_VW_P0635D | 0757 | **v1.0:** offline checks; guided installer and selectable combinations not tested in the car |
-| All other head units / trains / MU versions | — | — | **Not tested. Installation is refused.** |
+| Delphi 874B | MST2_EU_VW_P0635D | 0757 | **v1.0.1:** offline checks; guided installer and selectable combinations not tested in the car |
+| All other head units / trains / MU versions | — | — | **Not tested.** Review the installer warning. |
 
 | Engine / model year | Oil | Coolant | Power | Torque | Boost fix |
 | --- | --- | --- | --- | --- | --- |
 | CXSA 1.4 TSI / 2015 | ✓ | ✓ | ✓ | ✓ | ✗ |
 | All other engines / years | Not tested | Not tested | Not tested | Not tested | ✗ Not implemented |
 
-The checkmarks refer to the earlier fixed setup on the owner's car. They are not validation of every v1.0 setting. Independent Nm/hp calibration has not been verified. Matching Train/MU is only the first check: the installer also checks the exact files on the unit and refuses unknown files.
+The checkmarks refer to the earlier fixed setup on the owner's car. They are not validation of every v1.0.1 setting. Independent Nm/hp calibration has not been verified. An untested Train/MU prompts a warning. The installer checks the actual files on the unit and stops before writing if they are unrecognized.
 
 ## Requirements
 
@@ -43,7 +43,7 @@ The checkmarks refer to the earlier fixed setup on the owner's car. They are not
 
 ## Configure
 
-Download and extract the [v1.0 release](https://github.com/Victor-Unsullied/mib2-sports-gauges/releases/tag/v1.0).
+Download and extract the [v1.0.1 installer](https://utkulekesiz.com/assets/mib2-sports/v1.0.1/mib2-sports-gauges-v1.0.1.zip).
 
 Open a terminal in the extracted folder and run:
 
@@ -53,7 +53,7 @@ python configure.py
 
 Select only the fixes you need, enter the Train/MU from your unit, and save `config.xml`.
 
-Or use the [web configurator](https://utkulekesiz.com/en/tools/mib2-sports-gauges/). Its ZIP contains the same files as this release, with **only `config.xml` changed**. It does not connect to your car. No private base ZIP is needed.
+Or use the [web configurator](https://utkulekesiz.com/en/tools/mib2-sports-gauges/). Its ZIP contains the same program files as the installer download, with **only `config.xml` changed**. It does not connect to your car. No private base ZIP is needed.
 
 ## Install
 

@@ -5,7 +5,7 @@ from pathlib import Path
 import re
 
 ROOT = Path(__file__).resolve().parent
-NOTICE_VERSION = '2026-11-03.v1.0'
+NOTICE_VERSION = '2026-11-04.v1.0.1'
 REGISTRY = json.loads((ROOT / 'TESTED_DEVICES.json').read_text(encoding='utf-8'))
 
 
@@ -31,12 +31,12 @@ def assessment(device, language='en'):
         title = 'Sürümleri girin' if device is None else 'Test edilmiş sürüm' if tested else 'Test edilmemiş sürüm'
         message = ('Dışa aktarmadan önce yazılım train ve MU sürümünü girin.' if device is None else
                    record['scope_tr'] if record else
-                   'Bu train/MU çifti test edilmiş cihazlar listesinde yok. ZIP inceleme amacıyla oluşturulabilir; eşleşen kurulum profili bulunmadığından yükleyici kurulumu reddeder.')
+                   'Bu Train/MU denenmedi. Yükleyici, değişiklik yapmadan önce ünitenin dosyalarını kontrol eder.')
     else:
         title = 'Enter versions' if device is None else 'Tested version' if tested else 'Not tested'
         message = ('Enter the software train and MU version before exporting.' if device is None else
                    record['scope_en'] if record else
-                   'This train/MU pair is not in the tested-device list. A ZIP can be exported for review; installation is refused because no matching installation profile is available.')
+                   'This Train/MU has not been tested. The installer checks the unit’s files before making changes.')
     caution = ('Test edilmiş sürümlerde bile arıza ve cihazın kullanılamaz hale gelmesi (brick) mümkündür. Dışa aktarmadan önce tüm kurulum ve trafik güvenliği uyarılarını okuyun.' if language == 'tr' else
                'Failure and a bricked unit are still possible, even on tested versions. Read all installation and traffic-safety warnings before exporting.')
     return {'device_version_status': 'missing' if device is None else 'tested' if tested else 'not_tested',
@@ -70,9 +70,3 @@ def require_exportable(profile):
     acceptance = profile['risk_acceptance']
     expected = {'notice_version': NOTICE_VERSION, 'selection_sha256': acceptance_digest(profile['options'], profile['device'])}
     if acceptance != expected: raise ValueError('Review and acknowledge the current risk notice before exporting.')
-
-
-def require_installable(profile):
-    require_exportable(profile)
-    if not assessment(profile['device'])['installation_supported']:
-        raise ValueError('No installation profile exists for the entered train/MU pair; no device connection was made.')

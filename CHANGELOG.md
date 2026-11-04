@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.1
+
+- Untested Train/MU values show a warning before the user confirms. The installer still verifies the actual files on the unit before writing.
+
 ## v1.0 — 2026-11-03
 
 First public installer package, following the earlier web preview and internal development versions.

@@ -111,12 +111,17 @@ def install(selected, lang, ask=input, execute=backend.execute):
     if not confirm(pick(('Are these the settings you want?', 'İstediğiniz ayarlar bunlar mı?'), lang), lang, ask):
         print(pick(('Run configure.py, save config.xml, then return here.', 'configure.py ile ayarları düzenleyip config.xml kaydedin, sonra yeniden başlayın.'), lang))
         return 0
-    if (selected['train'], selected['mu']) != config.SUPPORTED:
-        raise ValueError(pick(('No installation profile for this Train/MU. No connection was made.', 'Bu Train/MU için kurulum profili yok. Araca bağlanılmadı.'), lang))
+    if not selected['train'] or not selected['mu']:
+        raise ValueError(pick(('Enter the software Train and MU before installing.', 'Kurulumdan önce yazılım Train ve MU bilgilerini girin.'), lang))
     options = selected['options']
     if not options['oil_temperature_fix'] and not options['coolant_temperature_fix'] and not backend.selection.needs_sports(backend.profile(selected, lang)):
         print(pick(('No corrections or custom settings selected. Nothing to install.', 'Düzeltme veya özel ayar seçilmedi. Kurulacak bir değişiklik yok.'), lang))
         return 0
+    if (selected['train'], selected['mu']) != config.SUPPORTED:
+        print(pick((
+            'WARNING: This Train/MU has not been tested. The installer will check the unit’s files before making any changes.',
+            'UYARI: Bu Train/MU denenmedi. Yükleyici, değişiklik yapmadan önce ünitenin dosyalarını kontrol edecek.',
+        ), lang))
     print('\n' + pick(RISK, lang) + '\n')
     if not confirm(pick(('Do you understand and accept these risks?', 'Bu riskleri anlayıp kabul ediyor musunuz?'), lang), lang, ask):
         return 0

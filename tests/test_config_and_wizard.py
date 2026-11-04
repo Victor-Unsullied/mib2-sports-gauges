@@ -72,10 +72,16 @@ class WizardTests(unittest.TestCase):
         for answers in (['no'],['yes','no']):
             calls=[];wizard.install(selected(oil_temperature_fix=True),'en',lambda _:answers.pop(0),lambda *a:calls.append(a))
             self.assertEqual(calls,[])
-    def test_unknown_device_no_connection(self):
-        c=selected(oil_temperature_fix=True);c['mu']='9999';calls=[]
-        with self.assertRaises(ValueError):wizard.install(c,'en',lambda _:'yes',lambda *a:calls.append(a))
-        self.assertEqual(calls,[])
+    def test_untested_versions_warn_and_use_normal_file_check_path(self):
+        config_data = selected(oil_temperature_fix=True)
+        config_data['mu'] = '9999'
+        calls = []
+        for responses in (['yes', 'no'], ['yes', 'yes', '192.168.1.4', 'yes', 'no']):
+            answers = iter(responses)
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                wizard.install(config_data, 'en', lambda _: next(answers), lambda action, *_: calls.append(action))
+            self.assertIn('This Train/MU has not been tested', output.getvalue())
+        self.assertEqual(calls, ['install-disabled'])
     def test_each_stage_requires_confirmation_and_resume_pins_settings(self):
         c=selected(oil_temperature_fix=True);answers=['yes','yes','192.168.1.4','yes','no'];calls=[]
         wizard.install(c,'en',lambda _:answers.pop(0),lambda a,*_:calls.append(a))

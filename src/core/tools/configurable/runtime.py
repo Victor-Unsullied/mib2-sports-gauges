@@ -197,7 +197,7 @@ def run(action, profile):
     verify()
     profile = selection.validate_profile(profile)
     if action in ('install-disabled', 'preflight', 'self-write', 'enable', 'accept-self-write', 'accept-enable'):
-        compatibility.require_installable(profile)
+        compatibility.require_exportable(profile)
     if action in ('accept-self-write', 'accept-enable'):
         # Acceptance checks the fresh boot before any next-phase write. Each
         # phase remains its own transaction and can be recovered independently.

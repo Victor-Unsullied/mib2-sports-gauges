@@ -1,4 +1,4 @@
-"""MIB2 Sports Gauges v1.0: interactive Windows installer."""
+"""MIB2 Sports Gauges v1.0.1: interactive Windows installer."""
 from src.wizard import main
 
 if __name__ == '__main__':
