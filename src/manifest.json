@@ -28,13 +28,18 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 618,
-      "sha256": "0579525a95c392259bbae9624fca60d1a7bedc55987effab60791f3f62038840"
+      "bytes": 1231,
+      "sha256": "1e7e4f910e7fcc148102daf118c401a69538718af61a74e89d98205ea2f140d7"
     },
     {
       "path": "README.md",
-      "bytes": 7100,
-      "sha256": "ee0873887dbbced258314321b84385f96062af720bfd50dc07ee5876a0e2141e"
+      "bytes": 9281,
+      "sha256": "2c72d07f5ac810d3339336fa0458bb94aa1c905a3ed17407389084452beed32f"
+    },
+    {
+      "path": "UNRELEASED.md",
+      "bytes": 5377,
+      "sha256": "3c883bfe6ffd6594d99a7ab9f010a2fb1eb80e3c3bbcd0ad5c239f4b9f729a08"
     },
     {
       "path": "VERSION",
@@ -58,8 +63,8 @@
     },
     {
       "path": "src/backend.py",
-      "bytes": 1179,
-      "sha256": "7dece1b90fa405312a61138acf54eac53b070b2f817a8718d3bf0bc3c1ce980b"
+      "bytes": 1186,
+      "sha256": "81851366d1e744f21bb2aabe4c308387fb34025a854e4a958fde9958c5ecd476"
     },
     {
       "path": "src/config.py",
@@ -112,14 +117,19 @@
       "sha256": "e5579cac3af819d26200db200c6dbea2a7fd4d543e88f6f6fdc899ecfb4d7f1e"
     },
     {
+      "path": "src/core/tools/configurable/durable.py",
+      "bytes": 3133,
+      "sha256": "e8a8aaecd1044f4106d2c62e18552632d24dec487cc493dde23f2b23cf4c4079"
+    },
+    {
       "path": "src/core/tools/configurable/protected-files.json",
       "bytes": 426,
       "sha256": "d9cf8414b624e077f148ac5c027914ad8bfa0144d02cd0c0a8845576d3fb668a"
     },
     {
       "path": "src/core/tools/configurable/runtime.py",
-      "bytes": 24216,
-      "sha256": "d6a9144f14ca6dea3661842463d24d5a795b5679e2a0166ccbc3c0980953336b"
+      "bytes": 39500,
+      "sha256": "5b93487154179083d32066a633908ad2b5374e919afc3c5912bb6e2d951a3351"
     },
     {
       "path": "src/core/tools/configurable/sport-ui-factory.jar",
@@ -178,13 +188,29 @@
     },
     {
       "path": "src/wizard.py",
-      "bytes": 14480,
-      "sha256": "39fb108ab4189c82668ed0674943653920d0e9670007e992fc57030bf393b042"
+      "bytes": 17686,
+      "sha256": "2efb755069f1ed30966f677f7230b60d9a923975aff14ef56866b5475df4acbc"
+    },
+    {
+      "path": "tests/sweep_local_recovery.py",
+      "bytes": 1867,
+      "sha256": "96c3f7d36fcafd42d64946e07900974f74434574bea7bed308a19ffd333658e9"
+    },
+    {
+      "path": "tests/sweep_recovery.py",
+      "bytes": 2076,
+      "sha256": "374582b3fc70e54253e5a099b304d421504c65adebf89a4dc3826537de4583a0"
     },
     {
       "path": "tests/test_config_and_wizard.py",
       "bytes": 7763,
       "sha256": "c8890491aa089229923c778d8ce17e62fb95914874af754544c71c7fe8989b88"
+    },
+    {
+      "path": "tests/test_recovery.py",
+      "bytes": 25835,
+      "sha256": "0e6d38219b1992169e1ab7ee26199d2d82ee7e513a340da29bcb297ead1c485a"
     }
-  ]
+  ],
+  "candidate": "recovery-20261105-unreleased"
 }

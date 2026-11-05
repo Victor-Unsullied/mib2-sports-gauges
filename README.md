@@ -1,5 +1,7 @@
 # MIB2 Sports Gauges
 
+**The main branch includes unreleased installer recovery fixes based on v1.0.0.** Read [UNRELEASED.md](UNRELEASED.md) for the changes, offline evidence and remaining Windows/QNX checks. The public v1.0.0 ZIP and website have not been updated.
+
 Selectable Sport HMI fixes for a **Delphi MIB2**, with an offline configurator and a guided Windows installer.
 
 **Current installer: v1.0.0 (experimental).**
@@ -45,7 +47,9 @@ The checkmarks refer to the earlier fixed setup on the owner's car. They are not
 
 ## Configure
 
-Download and extract the [v1.0.0 installer](https://utkulekesiz.com/assets/mib2-sports/v1.0.0/mib2-sports-gauges-v1.0.0.zip).
+For the recovery fixes described here, download and extract the [main-branch source](https://github.com/Victor-Unsullied/mib2-sports-gauges/archive/refs/heads/main.zip). These changes are development code and remain untested on Windows and the head unit.
+
+The [original v1.0.0 installer](https://utkulekesiz.com/assets/mib2-sports/v1.0.0/mib2-sports-gauges-v1.0.0.zip) is unchanged and **does not include these recovery fixes**.
 
 Open a terminal in the extracted folder and run:
 
@@ -55,7 +59,7 @@ python configure.py
 
 Select only the fixes you need, enter the Train/MU from your unit, and save `config.xml`.
 
-Or use the [web configurator](https://utkulekesiz.com/en/tools/mib2-sports-gauges/). Its ZIP contains the same program files as the installer download, with **only `config.xml` changed**. It does not connect to your car. No private base ZIP is needed.
+The [web configurator](https://utkulekesiz.com/en/tools/mib2-sports-gauges/) can also generate settings. Its ZIP still contains the original v1.0.0 program, with **only `config.xml` changed**; it does not include the main-branch recovery fixes. To use its settings with this branch, copy only the generated `config.xml` into the extracted main-branch folder. It does not connect to your car. No private base ZIP is needed.
 
 ## Install
 
@@ -71,12 +75,16 @@ python install.py
 
 The program backs up the existing state before enabling fixes. It stops on a failed check. Never change `config.xml` midway through an installation. Keep the **entire folder**, especially `state/`, with its backups, receipts and logs. Do not share your private `state/` folder.
 
+This candidate writes a checksummed transaction journal before changing live files. It publishes verified staging files with same-directory renames and keeps an exclusive unit lock through the staged installation. Resume from the same state folder; do not run copied active state folders on multiple computers. A connection or login failure before live writes can be retried. An interrupted transaction must be recovered with `--rollback`.
+
 To check files or view the steps without contacting the unit:
 
 ```powershell
 python install.py --check
 python install.py --plan
 ```
+
+On Windows, `python install.py --inspect` checks the unit's files and HMI through service access without writing files to the unit. It still requires the correct address and credentials.
 
 ## Roll back
 
@@ -87,6 +95,16 @@ python install.py --rollback
 ```
 
 The wizard restores the saved previous state and checks the next boot. It uses the saved session even if the current `config.xml` has changed. **Working service access is required. If the unit is unreachable, this program cannot guarantee recovery.** Keep older releases and their state folders before updating.
+
+Recovery in this candidate does not require a running HMI before restoration. It still refuses unknown carrier/UI identities and changed protected files. Repeated `--rollback` calls finish the same recorded recovery target; they do not step backwards through more installation history. A rejected rollback reboot leaves the restored target in place for another attempt.
+
+To use the candidate with an original v1.0 state folder, preserve that folder and select it explicitly:
+
+```powershell
+python install.py --rollback --state-dir "C:\path\to\original-install\state"
+```
+
+The candidate can import the original remote receipt, or a unique locally hashed backup if that receipt is damaged. Conflicting backups and an active lock owned by another state folder stop recovery. Do not delete receipts or lock files to bypass these checks.
 
 ## Report results
 

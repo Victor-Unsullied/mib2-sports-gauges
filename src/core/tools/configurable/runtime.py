@@ -1,4 +1,4 @@
-"""Staged, hash-gated configurable Sports runtime. No vehicle access without --live."""
+"""Hash-gated Sports transactions with durable, repeatable recovery."""
 import argparse
 from datetime import datetime, timezone
 import hashlib
@@ -9,6 +9,8 @@ import re
 import sys
 import time
 import zipfile
+import uuid
+import durable
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
@@ -16,6 +18,7 @@ sys.path.insert(0, str(ROOT))
 import selection
 import compatibility
 import device
+import transport
 
 REMOTE = '/persistence/golf-sports-configurator'
 OPTIONS = REMOTE + '/options.properties'
@@ -110,22 +113,24 @@ def verify():
     print('PASS: independent temperature flags, six gauge switches, Power source/unit and needle modes; offline only')
 
 
-def snapshot(ftp, telnet):
+def snapshot(ftp, telnet, recovery=False):
     for path, digest in json.loads((HERE / 'protected-files.json').read_text()).items():
         device.require(device.sha(device.fetch(ftp, path)) == digest, 'Protected startup/configuration file changed: ' + path)
     active = device.fetch(ftp, device.ACTIVE)
     row, configured = identify(active)
     processes = device.shell(telnet, '/proc/boot/pidin ar')
     jvms = [line for line in processes.splitlines() if re.match(r'^\s*\d+\s+\S*j9\s', line)]
-    device.require(len(jvms) == 1 and 'de.vw.mib.MIBMain' in jvms[0], 'Expected one native HMI JVM')
-    device.require('-Dgolf.' not in jvms[0] and '-Xbootclasspath/p:' not in jvms[0]
-                   and 'watchdog.sh' not in processes, 'Old trial overlay/watchdog present')
+    healthy = len(jvms) == 1 and 'de.vw.mib.MIBMain' in jvms[0]
+    if not recovery:
+        device.require(healthy, 'Expected one native HMI JVM')
+        device.require('-Dgolf.' not in jvms[0] and '-Xbootclasspath/p:' not in jvms[0]
+                       and 'watchdog.sh' not in processes, 'Old trial overlay/watchdog present')
     device.metadata(telnet, device.ACTIVE)
     def text(path):
         data = device.fetch(ftp, path, True)
-        return None if data is None else data.decode('ascii')
+        return None if data is None else data.decode('ascii', errors='replace')
     return active, row, {'active_sha256': device.sha(active), 'configured': configured,
-        'hmi_pid': int(jvms[0].split()[0]), 'config_status': text(CONFIG_STATUS),
+        'hmi_pid': int(jvms[0].split()[0]) if healthy else None, 'config_status': text(CONFIG_STATUS),
         'temperature_status': text(TEMP_STATUS), 'sports_status': text(SPORT_STATUS)}
 
 
@@ -151,119 +156,465 @@ def check_health(ftp, row, snap, profile, phase):
     device.require((snap['sports_status'] or '').endswith(' ' + sport + '\n'), 'Native Sports phase did not pass')
 
 
-def save_state(state):
-    STATE.parent.mkdir(parents=True, exist_ok=True)
-    STATE.write_text(json.dumps(state, indent=2) + '\n', encoding='utf-8')
+LOCK = REMOTE + '/writer.lock'
+UNIT = REMOTE + '/unit-id'
+JOURNAL = REMOTE + '/transaction.json'
+WRITER = REMOTE + '/writer-session.json'
+PATHS = {'carrier': device.ACTIVE, 'ui': UI, 'options': OPTIONS, 'receipt': RECEIPT}
 
 
-def restore(ftp, telnet, receipt):
-    old = bytes.fromhex(receipt['carrier_hex'])
-    identify(old)
-    device.require(receipt['backup'] == REMOTE + '/backup-' + device.sha(old)[:16] + '.jar', 'Unknown recovery backup path')
-    device.require(device.fetch(ftp, receipt['backup']) == old, 'Exact recovery carrier missing/corrupt')
-    staged = device.fetch(ftp, STAGE, True)
-    if staged is not None: identify(staged)
-    previous_receipt = receipt.get('previous_receipt_sha256')
-    receipt_data = None
-    if previous_receipt is not None:
-        device.require(re.fullmatch('[0-9a-f]{64}', previous_receipt), 'Unknown receipt backup identity')
-        receipt_data = device.fetch(ftp, REMOTE + '/receipt-' + previous_receipt + '.json')
-        device.require(device.sha(receipt_data) == previous_receipt, 'Previous recovery receipt changed')
-    device.shell(telnet, '/proc/boot/cp -p ' + receipt['backup'] + ' ' + STAGE)
-    device.require(device.fetch(ftp, STAGE) == old, 'Recovery stage differs')
-    device.metadata(telnet, STAGE)
-    for target, key in ((UI, 'ui_hex'), (OPTIONS, 'options_hex')):
-        previous = receipt[key]
-        if previous is None:
-            if device.fetch(ftp, target, True) is not None:
-                ftp.delete(target)
-        else:
-            data = bytes.fromhex(previous)
-            ftp.storbinary('STOR ' + target, io.BytesIO(data))
-            device.require(device.fetch(ftp, target) == data, 'Recovery file differs')
-    device.shell(telnet, '/proc/boot/mv -f ' + STAGE + ' ' + device.ACTIVE)
-    device.require(device.fetch(ftp, device.ACTIVE) == old, 'Carrier recovery failed')
-    device.metadata(telnet, device.ACTIVE)
-    if previous_receipt is None:
-        if device.fetch(ftp, RECEIPT, True) is not None:
-            ftp.delete(RECEIPT)
-    else:
-        ftp.storbinary('STOR ' + RECEIPT, io.BytesIO(receipt_data))
-        device.require(device.fetch(ftp, RECEIPT) == receipt_data, 'Previous recovery receipt readback failed')
+class RetryableError(RuntimeError):
+    """No live files changed, or exact preimages were restored and recorded."""
+
+
+def local(name):
+    return STATE_ROOT / 'native' / name
+
+
+def save_state(value):
+    durable.write_bytes(STATE, json.dumps(value, indent=2).encode('ascii') + b'\n')
+
+
+def load_state():
+    try:
+        journal = durable.load(local('transaction.json'))
+    except ValueError:
+        journal = None
+    if journal:
+        if journal['status'] == 'aborted':
+            return journal['state_before']
+        return state_for(journal)
+    try:
+        return json.loads(STATE.read_text(encoding='utf-8'))
+    except (FileNotFoundError, ValueError):
+        return {}
+
+
+def read_images(ftp):
+    return {key: None if (data := device.fetch(ftp, path, True)) is None else data.hex()
+            for key, path in PATHS.items()}
+
+
+def validate_images(images):
+    device.require(set(images) == set(PATHS), 'Invalid recovery file inventory')
+    for value in images.values():
+        device.require(value is None or isinstance(value, str) and len(value) <= 32 * 1024 * 1024,
+                       'Invalid recovery file size')
+        if value is not None:
+            bytes.fromhex(value)
+    device.require(images['carrier'] is not None, 'Recovery carrier missing')
+    identify(bytes.fromhex(images['carrier']))
+    device.require(recognized_ui(None if images['ui'] is None else bytes.fromhex(images['ui'])),
+                   'Unrecognized recovery UI')
+
+
+def validate_journal(journal):
+    device.require(journal['schema'] == 1 and re.fullmatch('[0-9a-f]{32}', journal['id']), 'Invalid transaction identity')
+    for key in ('owner', 'unit'):
+        device.require(re.fullmatch('[0-9a-f]{32}', journal[key]), 'Invalid transaction owner/unit')
+    device.require(journal['marker'] == '/tmp/golf-sports-boot-' + journal['id'], 'Invalid boot marker')
+    device.require(journal['status'] in ('prepared', 'pending', 'accepted', 'aborted'), 'Invalid transaction status')
+    validate_images(journal['before']); validate_images(journal['after'])
+    validate_images(journal['recovery']['images'])
+    return journal
+
+
+def state_for(journal):
+    state = {'phase': journal['phase'], 'pending': journal['status'] != 'accepted',
+             'profile_id': profile_id(journal['profile']), 'transaction': journal['id']}
+    state.update(journal.get('acceptance', {}))
+    return state
+
+
+def next_revision():
+    """Ordering survives process restart and PC clock corrections."""
+    newest = 0
+    for name in ('transaction.json', 'recovery.json'):
+        try:
+            record = durable.load(local(name))
+        except ValueError:
+            continue
+        if record:
+            newest = max(newest, record.get('revision', 0))
+    return newest + 1
+
+
+def checkpoint(journal, **changes):
+    journal.update(changes, revision=max(journal['revision'] + 1, next_revision()))
+    validate_journal(journal)
+    durable.save(local('transaction.json'), journal)
+
+
+def owner_record():
+    try:
+        owner = durable.load(local('owner.json'))
+    except ValueError:
+        journal = durable.load(local('transaction.json'))
+        if not journal:
+            raise
+        owner = {key: journal[key] for key in ('owner', 'unit', 'host')}
+    if owner is None:
+        previous_host = transport.ADDRESS
+        try:
+            old_session = json.loads((STATE_ROOT / 'session.json').read_text())
+            if isinstance(old_session, dict):
+                previous_host = old_session.get('host') or previous_host
+        except (OSError, ValueError, TypeError):
+            pass
+        owner = {'owner': uuid.uuid4().hex, 'host': previous_host, 'unit': None}
+        durable.save(local('owner.json'), owner)
+    device.require(re.fullmatch('[0-9a-f]{32}', owner['owner']), 'Invalid local owner')
+    # Address changes require an existing persistent unit token to match.
+    return owner
+
+
+def assert_owner(ftp, owner):
+    device.require(device.fetch(ftp, LOCK, True) == owner['owner'].encode('ascii'),
+                   'Unit belongs to another active installer; use the original state folder')
+
+
+def sync(telnet):
     device.shell(telnet, '/ffs/sbin/sync')
 
 
+def publish(ftp, telnet, target, data, token, owner=None, executable=False):
+    """Never truncate a live file. The unique stage is disposable and owned."""
+    device.require(re.fullmatch('[0-9a-f]{32}', token), 'Invalid stage owner')
+    if owner is not None:
+        assert_owner(ftp, owner)
+    if data is None:
+        if device.fetch(ftp, target, True) is not None:
+            device.shell(telnet, '/proc/boot/rm -f ' + target)
+            sync(telnet)
+        return
+    if device.fetch(ftp, target, True) == data:
+        return
+    stage = target + '.' + token + '.stage'
+    if executable:
+        # A fresh copy replaces only this transaction's disposable staging file.
+        device.shell(telnet, '/proc/boot/cp -p ' + device.ACTIVE + ' ' + stage)
+    ftp.storbinary('STOR ' + stage, io.BytesIO(data))
+    device.require(device.fetch(ftp, stage) == data, 'Staged file readback failed: ' + target)
+    if executable:
+        device.metadata(telnet, stage)
+    sync(telnet)
+    if owner is not None:
+        assert_owner(ftp, owner)
+    device.shell(telnet, '/proc/boot/mv -f ' + stage + ' ' + target)
+    sync(telnet)
+    device.require(device.fetch(ftp, target) == data, 'Published file readback failed: ' + target)
+
+
+def acquire(ftp, telnet, owner):
+    remote_unit = device.fetch(ftp, UNIT, True)
+    if owner['unit'] is not None:
+        device.require(remote_unit == owner['unit'].encode(), 'Different unit or missing unit identity; refusing writes')
+    else:
+        device.require(owner['host'] == transport.ADDRESS, 'Unbound recovery must use its original unit address')
+        if remote_unit is not None:
+            device.require(re.fullmatch(b'[0-9a-f]{32}', remote_unit), 'Invalid unit identity')
+    existing = device.fetch(ftp, LOCK, True)
+    if existing is not None:
+        assert_owner(ftp, owner)
+        previous = device.fetch(ftp, WRITER, True)
+        if previous is not None:
+            try:
+                lease = json.loads(previous)
+                device.require(isinstance(lease, dict) and re.fullmatch('[0-9a-f]{32}', lease['owner'])
+                               and type(lease['pid']) is int and lease['pid'] > 0
+                               and re.fullmatch('/tmp/golf-sports-writer-[0-9a-f]{32}', lease['marker']),
+                               'Invalid writer session record')
+            except (ValueError, KeyError, TypeError):
+                lease = durable.load(local('writer-session.json'))
+            device.require(isinstance(lease, dict), 'Writer session recovery data missing')
+            device.require(re.fullmatch('[0-9a-f]{32}', lease['owner']) and type(lease['pid']) is int and lease['pid'] > 0
+                           and re.fullmatch('/tmp/golf-sports-writer-[0-9a-f]{32}', lease['marker']),
+                           'Invalid writer session record')
+            # A previous owner released the lock before this folder acquired it;
+            # its old session record can remain until our publication completes.
+            if lease['owner'] == owner['owner'] and device.fetch(ftp, lease['marker'], True) is not None:
+                processes = device.shell(telnet, '/proc/boot/pidin ar')
+                device.require(not re.search(r'(?m)^\s*' + str(lease['pid']) + r'\s', processes),
+                               'Previous installer service session is still active; wait for it to end before recovery')
+    else:
+        device.shell(telnet, '/ffs/sbin/mkdir -p ' + REMOTE)
+        token = uuid.uuid4().hex
+        source = REMOTE + '/.lock-owner-' + token
+        ftp.storbinary('STOR ' + source, io.BytesIO(owner['owner'].encode()))
+        device.require(device.fetch(ftp, source) == owner['owner'].encode(), 'Lock owner readback failed')
+        sync(telnet)
+        # QNX ln normally replaces writable destinations! -i with EOF explicitly
+        # refuses replacement. Concurrent link creation must never be forced.
+        try:
+            device.shell(telnet, '/proc/boot/ln -i ' + source + ' ' + LOCK + ' < /dev/null')
+        except ValueError:
+            assert_owner(ftp, owner)
+        assert_owner(ftp, owner)
+        sync(telnet)
+    response = device.shell(telnet, 'echo GOLF_SHELL_PID:$$')
+    pids = re.findall(r'(?m)^GOLF_SHELL_PID:(\d+)\s*$', response)
+    device.require(len(pids) == 1 and int(pids[0]) > 0, 'Cannot identify the writer service session')
+    token = uuid.uuid4().hex
+    marker = '/tmp/golf-sports-writer-' + token
+    ftp.storbinary('STOR ' + marker, io.BytesIO(owner['owner'].encode()))
+    device.require(device.fetch(ftp, marker) == owner['owner'].encode(), 'Writer marker readback failed')
+    lease = {'owner': owner['owner'], 'pid': int(pids[0]), 'marker': marker}
+    durable.save(local('writer-session.json'), lease)
+    publish(ftp, telnet, WRITER, durable.encode(lease), token, owner)
+    if remote_unit is None:
+        remote_unit = uuid.uuid4().hex.encode()
+        publish(ftp, telnet, UNIT, remote_unit, uuid.uuid4().hex, owner)
+    owner.update(unit=remote_unit.decode(), host=transport.ADDRESS)
+    durable.save(local('owner.json'), owner)
+
+
+def release(ftp, telnet, owner):
+    assert_owner(ftp, owner)
+    device.shell(telnet, '/proc/boot/rm -f ' + LOCK)
+    sync(telnet)
+
+
+def apply_images(ftp, telnet, images, token, owner):
+    validate_images(images)
+    # Receipt is retained until every target file is restored. The journal is
+    # independent of the receipt, so a repeated rollback keeps the same target.
+    for key in ('ui', 'options', 'carrier', 'receipt'):
+        value = images[key]
+        publish(ftp, telnet, PATHS[key], None if value is None else bytes.fromhex(value),
+                token, owner, executable=key in ('carrier', 'ui'))
+    device.require(read_images(ftp) == images, 'Transaction readback differs')
+
+
+def cleanup_stages(ftp, telnet, journal, owner):
+    """Remove only scratch files belonging to a validated recorded transaction."""
+    validate_journal(journal)
+    assert_owner(ftp, owner)
+    for target in (*PATHS.values(), JOURNAL):
+        stage = target + '.' + journal['id'] + '.stage'
+        if device.fetch(ftp, stage, True) is not None:
+            ftp.delete(stage)
+    sync(telnet)
+
+
+def receipt_images(ftp, receipt):
+    if receipt.get('schema') == 1:
+        validate_images(receipt['images'])
+        return receipt
+    # Import the released v1.0 receipt without relying on its redundant backup JAR.
+    old = bytes.fromhex(receipt['carrier_hex'])
+    device.require(receipt['backup'] == REMOTE + '/backup-' + device.sha(old)[:16] + '.jar', 'Invalid legacy backup identity')
+    previous = receipt.get('previous_receipt_sha256')
+    previous_data = None
+    if previous is not None:
+        device.require(re.fullmatch('[0-9a-f]{64}', previous), 'Invalid legacy receipt identity')
+        previous_data = device.fetch(ftp, REMOTE + '/receipt-' + previous + '.json')
+        device.require(device.sha(previous_data) == previous, 'Legacy receipt history changed')
+    images = {'carrier': old.hex(), 'ui': receipt['ui_hex'], 'options': receipt['options_hex'],
+              'receipt': None if previous_data is None else previous_data.hex()}
+    validate_images(images)
+    return {'schema': 1, 'images': images, 'health': None}
+
+
+def legacy_local_receipt():
+    """Only accept a unique independently hashed preimage from the old installer."""
+    candidates = {}
+    names = {'carrier': 'carrier.jar', 'ui': 'ui.jar', 'options': 'options.properties', 'receipt': 'previous-receipt.json'}
+    for manifest_path in local('logs').glob('*/incoming-backup/manifest.json'):
+        try:
+            inventory = json.loads(manifest_path.read_text())
+            images = {}
+            for key, filename in names.items():
+                expected = inventory[filename]
+                data = None if expected is None else (manifest_path.parent / filename).read_bytes()
+                device.require(data is None or device.sha(data) == expected, 'Legacy backup damaged')
+                images[key] = None if data is None else data.hex()
+            validate_images(images)
+            candidates[device.sha(durable.encode(images))] = {'schema': 1, 'images': images, 'health': None}
+        except (OSError, ValueError, KeyError, TypeError):
+            continue
+    device.require(len(candidates) == 1, 'No unique validated recovery backup; keep all state and backup files')
+    return next(iter(candidates.values()))
+
+
+def get_recovery(ftp, journal):
+    saved = durable.load(local('recovery.json'))
+    if saved is not None and (journal is None or saved.get('revision', 0) > journal['revision']):
+        validate_images(saved['images'])
+        return saved
+    if journal and journal['status'] != 'aborted':
+        return journal['recovery']
+    try:
+        data = device.fetch(ftp, RECEIPT, True)
+        if data is not None:
+            return receipt_images(ftp, json.loads(data))
+    except (ValueError, KeyError, TypeError):
+        pass
+    if saved is not None:
+        validate_images(saved['images'])
+        return saved
+    return legacy_local_receipt()
+
+
+def profile_from_options(data):
+    rows = [line.split('=', 1) for line in data.decode('ascii').splitlines()]
+    device.require(len(rows) == 18 and all(len(row) == 2 for row in rows), 'Invalid restored options')
+    values = dict(rows)
+    options = dict(selection.CATALOG['defaults'])
+    for native, key in [('oil', 'oil_temperature_fix'), ('coolant', 'coolant_temperature_fix'),
+                        ('torque', 'enable_torque_gauge'), *zip(
+                            ('gauge_boost', 'gauge_gmeter', 'gauge_coolant', 'gauge_power', 'gauge_oil'), selection.GAUGE_KEYS[:-1])]:
+        device.require(values[native] in ('true', 'false'), 'Invalid restored flag')
+        options[key] = values[native] == 'true'
+    for key, native in [('power_source', 'power_source'), ('needle_smoothing', 'smoothing'), ('power_unit', 'power_unit')]:
+        options[key] = values[native]
+    for key in selection.RANGE_KEYS:
+        options[key] = None if values[key] == 'auto' else int(values[key])
+    profile = selection.make_profile(options)
+    device.require(properties(profile, values['mode']) == data, 'Restored options differ from strict schema')
+    return profile, values['mode']
+
+
+def verify_restored(ftp, row, snap, recovery):
+    images = recovery['images']
+    device.require(read_images(ftp) == images, 'Restored files changed after reboot')
+    if snap['configured']:
+        selected, phase = profile_from_options(bytes.fromhex(images['options']))
+        check_health(ftp, row, snap, selected, phase)
+    else:
+        # Older carriers do not emit configurable-v4 status. Compare available
+        # baseline component states, never treating an error status as health.
+        for key in ('temperature_status', 'sports_status'):
+            expected = (recovery.get('health') or {}).get(key)
+            actual = snap.get(key)
+            if actual is not None:
+                device.require(' failed:' not in actual, 'Restored component failed: ' + key)
+            if expected is not None:
+                expected_tail = expected.split(' ', 2)[-1]
+                device.require(actual is not None and actual.split(' ', 2)[-1] == expected_tail,
+                               'Restored component status differs: ' + key)
+
+
+def persist_remote(ftp, telnet, journal, owner):
+    publish(ftp, telnet, JOURNAL, durable.envelope(journal), journal['id'], owner)
+
+
+def prepare(action, profile, phase, before, after, state, snap, recovery, owner):
+    token = uuid.uuid4().hex
+    journal = {'schema': 1, 'revision': next_revision(), 'id': token, **owner,
+               'action': action, 'profile': profile, 'phase': phase, 'status': 'prepared',
+               'before': before, 'after': after, 'state_before': state, 'snapshot_before': snap,
+               'recovery': recovery, 'marker': '/tmp/golf-sports-boot-' + token}
+    validate_journal(journal)
+    durable.save(local('transaction.json'), journal)
+    return journal
+
+
 def run(action, profile):
+    with durable.lock(local('runtime.lock')):
+        return _run(action, profile)
+
+
+def _run(action, profile):
     verify()
     profile = selection.validate_profile(profile)
     if action in ('install-disabled', 'preflight', 'self-write', 'enable', 'accept-self-write', 'accept-enable'):
         compatibility.require_exportable(profile)
     if action in ('accept-self-write', 'accept-enable'):
-        # Acceptance checks the fresh boot before any next-phase write. Each
-        # phase remains its own transaction and can be recovered independently.
-        state = json.loads(STATE.read_text()) if STATE.exists() else {}
         expected = 'preflight' if action == 'accept-self-write' else 'self-write'
-        device.require(state.get('phase') == expected and state.get('pending') is True,
-                       'Expected phase is not awaiting fresh-boot acceptance')
-        run('accept', profile)
-        run('self-write' if action == 'accept-self-write' else 'enable', profile)
-        return
-    state = json.loads(STATE.read_text()) if STATE.exists() else {}
-    folder = STATE_ROOT / 'native/logs' / datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
-    folder.mkdir(parents=True)
-    report = {'action': action, 'profile_id': profile_id(profile), 'events': []}
+        state = load_state()
+        device.require(state.get('phase') == expected, 'Expected native phase missing')
+        _run('accept', profile)
+        return _run('self-write' if action == 'accept-self-write' else 'enable', profile)
+    report = {'action': action, 'events': []}
+    folder = local('logs') / datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
     def record(step, **details):
-        report['events'].append({'step': step, **details})
-        (folder / 'report.json').write_text(json.dumps(report, indent=2) + '\n')
-        print(json.dumps({'step': step, **details}), flush=True)
-    ftp = telnet = None
-    changed = rebooting = False
-    receipt = None
-    incoming_options = None
+        entry = {'step': step, **details}
+        report['events'].append(entry)
+        try:
+            durable.write_bytes(folder / 'report.json', durable.encode(report))
+        except OSError:
+            pass
+        try:
+            print(json.dumps(entry), flush=True)
+        except OSError:
+            pass
+    ftp = telnet = owner = transaction = None
+    locked = rebooting = False
     try:
+        try:
+            journal = durable.load(local('transaction.json'))
+        except ValueError:
+            journal = None  # Validated remote mirror may reconstruct it below.
         ftp = device.ftp_connect(); telnet = device.Telnet()
-        active, row, snap = snapshot(ftp, telnet)
-        incoming_options = device.fetch(ftp, OPTIONS, True)
+        recovery_action = action == 'rollback'
+        active, row, snap = snapshot(ftp, telnet, recovery=recovery_action)
         record('snapshot', **snap)
+        before = read_images(ftp)
+        validate_images(before)
+        if action in ('install-disabled', 'inspect'):
+            candidate, row = compose(active)
+            device.require(recognized_ui(None if before['ui'] is None else bytes.fromhex(before['ui'])), 'Foreign configurable UI')
+            if snap['configured']:
+                old_profile, old_phase = profile_from_options(bytes.fromhex(before['options']))
+                check_health(ftp, row, snap, old_profile, old_phase)
+                if action == 'install-disabled':
+                    device.require(old_phase == 'enabled', 'Existing configurable installation is incomplete; recover its original session')
         if action == 'inspect':
-            return
-        if action == 'rollback':
-            saved = device.fetch(ftp, RECEIPT)
-            target_receipt = json.loads(saved.decode('utf-8'))
-            expected_backup = REMOTE + '/backup-' + device.sha(bytes.fromhex(target_receipt['carrier_hex']))[:16] + '.jar'
-            device.require(target_receipt['backup'] == expected_backup and snap['configured'], 'Unrecognized recovery receipt/state')
-            # Preserve the accepted configuration if the native reboot is rejected.
-            backup = REMOTE + '/backup-' + device.sha(active)[:16] + '.jar'
-            existing = device.fetch(ftp, backup, True)
-            device.require(existing in (None, active), 'Foreign recovery carrier')
-            if existing is None: device.shell(telnet, '/proc/boot/cp -p ' + device.ACTIVE + ' ' + backup)
-            device.require(device.fetch(ftp, backup) == active, 'Rollback fallback carrier differs')
-            receipt_backup = REMOTE + '/receipt-' + device.sha(saved) + '.json'
-            previous = device.fetch(ftp, receipt_backup, True)
-            device.require(previous in (None, saved), 'Foreign receipt fallback')
-            if previous is None: ftp.storbinary('STOR ' + receipt_backup, io.BytesIO(saved))
-            device.require(device.fetch(ftp, receipt_backup) == saved, 'Rollback fallback receipt differs')
-            current_ui = device.fetch(ftp, UI, True)
-            receipt = {'backup': backup, 'carrier_hex': active.hex(),
-                       'ui_hex': None if current_ui is None else current_ui.hex(),
-                       'options_hex': None if incoming_options is None else incoming_options.hex(),
-                       'previous_receipt_sha256': device.sha(saved)}
-            changed = True
-            restore(ftp, telnet, target_receipt)
-            save_state({'phase': 'rollback', 'pending': True, 'expected_sha256': device.sha(bytes.fromhex(target_receipt['carrier_hex'])),
-                        'previous_config_status': snap['config_status']})
-            rebooting = True; device.normal_reboot(telnet, record)
-            return
-        if action == 'accept' and state.get('phase') == 'rollback':
-            device.require(state.get('pending') and snap['active_sha256'] == state['expected_sha256'], 'Recovery boot not pending/matched')
-            device.require(snap['config_status'] != state['previous_config_status'], 'Fresh rollback boot not established')
-            state.update(pending=False); save_state(state); record('rollback_boot_accepted'); return
+            return {'status': 'inspected', 'snapshot': snap}
+        owner = owner_record()
+        remote_data = device.fetch(ftp, JOURNAL, True)
+        remote_journal = None
+        if remote_data is not None:
+            try:
+                remote_journal = validate_journal(durable.unpack(remote_data))
+            except (ValueError, KeyError, TypeError):
+                device.require(journal is not None, 'No intact local or remote transaction record')
+        if remote_journal and remote_journal['owner'] == owner['owner']:
+            if journal is None or remote_journal['revision'] > journal['revision']:
+                journal = remote_journal
+                durable.save(local('transaction.json'), journal)
+        elif remote_journal and journal and action != 'install-disabled':
+            raise ValueError('Another installation changed this unit; use its current state folder')
+        elif remote_journal and journal is None and action == 'rollback':
+            saved_attempt = durable.load(local('recovery.json'))
+            if saved_attempt is not None and saved_attempt['images'] == before:
+                # A new folder was interrupted before making any managed-file
+                # changes. It cannot consume the previous installer's receipt.
+                if device.fetch(ftp, LOCK, True) == owner['owner'].encode():
+                    release(ftp, telnet, owner)
+                return {'status': 'unchanged', 'phase': 'rollback'}
+            raise ValueError('Use the state folder that created the current installation')
+        if journal:
+            validate_journal(journal)
+            device.require(journal['owner'] == owner['owner'], 'Recovery owner differs')
+        if action == 'install-disabled' and journal:
+            device.require(journal['status'] in ('accepted', 'aborted'), 'Interrupted operation requires --rollback')
+            device.require(journal['phase'] == 'rollback' or journal['status'] == 'aborted' or
+                           journal['phase'] == 'enabled' and journal.get('acceptance', {}).get('observed_seconds', 0) >= 360,
+                           'Finish or roll back the existing installation before starting another')
+        if action == 'install-disabled':
+            # Save this attempt's target before even acquiring remote metadata.
+            # A crash while taking the lock must not select an older receipt.
+            recovery = {'schema': 1, 'images': before, 'health': snap,
+                        'revision': next_revision(), 'owner': owner['owner'], 'host': transport.ADDRESS}
+            durable.save(local('recovery.json'), recovery)
+        acquire(ftp, telnet, owner); locked = True
+        # Re-read after the lock, closing the preflight/acquisition race.
+        device.require(read_images(ftp) == before, 'Unit changed while acquiring the installation lock')
+        if journal and journal['owner'] == owner['owner']:
+            cleanup_stages(ftp, telnet, journal, owner)
+        state = load_state()
         if action in ('accept', 'observe-disabled', 'observe-enabled'):
-            device.require(state.get('profile_id') == profile_id(profile), 'No matching selected installation session')
-            phase = state['phase']
-            check_health(ftp, row, snap, profile, phase)
-            if state.get('pending'):
-                device.require(snap['config_status'] != state['previous_config_status'], 'Fresh configuration boot missing')
+            device.require(journal is not None and journal['status'] in ('pending', 'accepted'), 'No pending boot transaction')
+            device.require(device.fetch(ftp, journal['marker'], True) is None, 'Fresh unit reboot not established')
+            device.require(before == journal['after'], 'Expected transaction files changed')
+            phase = journal['phase']
+            if phase == 'rollback':
+                verify_restored(ftp, row, snap, journal['recovery'])
+            else:
+                device.require(profile_id(profile) == profile_id(journal['profile']), 'Selected configuration changed')
+                check_health(ftp, row, snap, profile, phase)
+            acceptance = {'accepted_snapshot': snap}
             if action.startswith('observe-'):
                 expected = 'disabled' if action == 'observe-disabled' else 'enabled'
                 device.require(phase == expected, 'Wrong observation phase')
@@ -273,112 +624,107 @@ def run(action, profile):
                     time.sleep(12)
                     _, fresh_row, fresh = snapshot(ftp, telnet)
                     check_health(ftp, fresh_row, fresh, profile, phase)
-                    device.require((fresh['hmi_pid'], fresh['config_status']) == identity, 'HMI/configuration restarted during observation')
+                    device.require(read_images(ftp) == journal['after'], 'Files changed during observation')
+                    device.require((fresh['hmi_pid'], fresh['config_status']) == identity, 'HMI restarted during observation')
                     record('observing', stable_seconds=int(time.monotonic() - began))
-                state['observed_seconds'] = time.monotonic() - began
-            state.update(pending=False, accepted_snapshot=snap)
-            save_state(state); record('native_phase_accepted', phase=phase); return
-        if action == 'install-disabled':
-            device.require(not state.get('pending'), 'A previous reboot still needs acceptance')
-            candidate, row = compose(active)
-            current_ui = device.fetch(ftp, UI, True)
-            current_options = device.fetch(ftp, OPTIONS, True)
-            device.require(recognized_ui(current_ui), 'Foreign configurable UI')
-            previous_receipt = device.fetch(ftp, RECEIPT, True)
-            # Keep an independent local copy before touching the unit. A failed
-            # disk write aborts the step before any remote mutation.
-            local_backup = folder / 'incoming-backup'
-            local_backup.mkdir()
-            backup_files = {'carrier.jar': active, 'ui.jar': current_ui,
-                            'options.properties': current_options,
-                            'previous-receipt.json': previous_receipt}
-            inventory = {}
-            for name, data in backup_files.items():
-                inventory[name] = None if data is None else device.sha(data)
-                if data is not None:
-                    (local_backup / name).write_bytes(data)
-                    device.require((local_backup / name).read_bytes() == data, 'Local backup readback failed')
-            (local_backup / 'manifest.json').write_text(json.dumps(inventory, indent=2) + '\n', encoding='utf-8')
-            backup = REMOTE + '/backup-' + device.sha(active)[:16] + '.jar'
-            device.shell(telnet, '/ffs/sbin/mkdir -p ' + REMOTE)
-            existing = device.fetch(ftp, backup, True)
-            device.require(existing in (None, active), 'Foreign recovery carrier')
-            if existing is None: device.shell(telnet, '/proc/boot/cp -p ' + device.ACTIVE + ' ' + backup)
-            device.require(device.fetch(ftp, backup) == active, 'Recovery backup readback failed')
-            previous_receipt = device.fetch(ftp, RECEIPT, True)
-            if previous_receipt is not None:
-                receipt_backup = REMOTE + '/receipt-' + device.sha(previous_receipt) + '.json'
-                saved = device.fetch(ftp, receipt_backup, True)
-                device.require(saved in (None, previous_receipt), 'Foreign receipt backup')
-                if saved is None:
-                    ftp.storbinary('STOR ' + receipt_backup, io.BytesIO(previous_receipt))
-                device.require(device.fetch(ftp, receipt_backup) == previous_receipt, 'Receipt backup differs')
-            receipt = {'backup': backup, 'carrier_hex': active.hex(),
-                       'ui_hex': None if current_ui is None else current_ui.hex(),
-                       'options_hex': None if current_options is None else current_options.hex(),
-                       'previous_receipt_sha256': None if previous_receipt is None else device.sha(previous_receipt)}
-            stage = device.fetch(ftp, STAGE, True)
-            device.require(stage is None or device.sha(stage) in (device.sha(active), device.sha(candidate)), 'Foreign carrier staging file')
-            if stage is None: device.shell(telnet, '/proc/boot/cp -p ' + device.ACTIVE + ' ' + STAGE)
-            ftp.storbinary('STOR ' + STAGE, io.BytesIO(candidate))
-            device.require(device.fetch(ftp, STAGE) == candidate, 'Carrier stage readback failed'); device.metadata(telnet, STAGE)
-            ui_data = (HERE / row['ui']).read_bytes()
-            staged_ui = device.fetch(ftp, UI_STAGE, True)
-            device.require(recognized_ui(staged_ui), 'Foreign UI stage')
-            if staged_ui is None:
-                device.shell(telnet, '/proc/boot/cp -p ' + device.ACTIVE + ' ' + UI_STAGE)
-            ftp.storbinary('STOR ' + UI_STAGE, io.BytesIO(ui_data))
-            device.require(device.fetch(ftp, UI_STAGE) == ui_data, 'UI stage readback failed')
-            device.metadata(telnet, UI_STAGE)
-            device.require(device.fetch(ftp, device.ACTIVE) == active and device.fetch(ftp, UI, True) == current_ui
-                           and device.fetch(ftp, OPTIONS, True) == current_options, 'Incoming configuration changed while staging')
-            changed = True
-            ftp.storbinary('STOR ' + RECEIPT, io.BytesIO(json.dumps(receipt).encode()))
-            device.require(json.loads(device.fetch(ftp, RECEIPT)) == receipt, 'Recovery receipt readback failed')
-            device.shell(telnet, '/proc/boot/mv -f ' + UI_STAGE + ' ' + UI)
-            phase = 'disabled'
+                acceptance['observed_seconds'] = time.monotonic() - began
+            else:
+                acceptance.update({k: v for k, v in journal.get('acceptance', {}).items() if k == 'observed_seconds'})
+            checkpoint(journal, status='accepted', acceptance=acceptance)
+            persist_remote(ftp, telnet, journal, owner)
+            save_state(state_for(journal))
+            if phase == 'rollback' or action == 'observe-enabled':
+                release(ftp, telnet, owner); locked = False
+            record('native_phase_accepted', phase=phase)
+            return {'status': 'accepted', 'phase': phase}
+        if action == 'rollback':
+            if journal and journal['action'] == 'rollback':
+                if journal['status'] == 'accepted':
+                    device.require(before == journal['after'], 'Accepted rollback files changed')
+                    release(ftp, telnet, owner); locked = False
+                    return {'status': 'accepted', 'phase': 'rollback'}
+                transaction = journal  # Never consume a second receipt on retry.
+            else:
+                if journal is None and before['ui'] is None and before['options'] is None and before['receipt'] is None and row['name'] == 'stock' and not snap['configured'] and not local('recovery.json').exists() and not list(local('logs').glob('*/incoming-backup/manifest.json')):
+                    release(ftp, telnet, owner); locked = False
+                    return {'status': 'unchanged', 'phase': 'rollback'}
+                recovery = get_recovery(ftp, journal)
+                validate_images(recovery['images'])
+                # Unknown carriers still stop; a running HMI is not required.
+                old_row, _ = identify(bytes.fromhex(recovery['images']['carrier']))
+                device.require(row['configured_sha256'] == old_row['configured_sha256'], 'Backup belongs to a different carrier profile')
+                transaction = prepare(action, profile, 'rollback', before, recovery['images'], state, snap, recovery, owner)
+        elif action == 'install-disabled':
+            after = {'carrier': candidate.hex(), 'ui': (HERE / row['ui']).read_bytes().hex(),
+                     'options': properties(profile, 'disabled').hex(), 'receipt': durable.encode(recovery).hex()}
+            transaction = prepare(action, profile, 'disabled', before, after, state, snap, recovery, owner)
         else:
             required = {'preflight': 'disabled', 'self-write': 'preflight',
                         'enable': 'self-write' if selection.needs_sports(profile) else 'disabled'}
-            device.require(action in required and state.get('phase') == required[action] and state.get('pending') is False,
-                           'Required native phase acceptance missing')
-            device.require(state.get('profile_id') == profile_id(profile), 'Selected configuration changed between stages')
-            check_health(ftp, row, snap, profile, state['phase'])
-            device.require(snap['hmi_pid'] == state['accepted_snapshot']['hmi_pid'] and
-                           snap['config_status'] == state['accepted_snapshot']['config_status'], 'Accepted boot identity changed')
-            if state['phase'] == 'disabled':
-                device.require(state.get('observed_seconds', 0) >= 360, 'Six-minute disabled acceptance missing')
+            accepted_state = state_for(journal) if journal is not None else {}
+            if journal and journal['status'] == 'aborted':
+                device.require(before == journal['before'], 'Restored phase files changed')
+                accepted_state = journal['state_before']
+            device.require(action in required and accepted_state.get('pending') is False
+                           and accepted_state.get('phase') == required[action], 'Required native phase acceptance missing')
+            device.require(accepted_state['profile_id'] == profile_id(profile), 'Selected configuration changed')
+            check_health(ftp, row, snap, profile, accepted_state['phase'])
+            accepted = accepted_state['accepted_snapshot']
+            device.require((snap['hmi_pid'], snap['config_status']) == (accepted['hmi_pid'], accepted['config_status']),
+                           'Accepted boot identity changed')
+            if accepted_state['phase'] == 'disabled':
+                device.require(accepted_state.get('observed_seconds', 0) >= 360, 'Six-minute disabled acceptance missing')
             phase = {'preflight': 'preflight', 'self-write': 'self-write', 'enable': 'enabled'}[action]
-            changed = True
-        ftp.storbinary('STOR ' + OPTIONS, io.BytesIO(properties(profile, phase)))
-        device.require(device.fetch(ftp, OPTIONS) == properties(profile, phase), 'Selected options readback failed')
-        device.require(device.sha(device.fetch(ftp, UI)) == manifest()['ui_sha256'][row['ui']], 'UI readback failed')
-        if action == 'install-disabled':
-            device.shell(telnet, '/proc/boot/mv -f ' + STAGE + ' ' + device.ACTIVE)
-        device.require(device.sha(device.fetch(ftp, device.ACTIVE)) == row['configured_sha256'], 'Active carrier differs')
-        device.metadata(telnet, device.ACTIVE); device.shell(telnet, '/ffs/sbin/sync')
-        save_state({'phase': phase, 'pending': True, 'profile_id': profile_id(profile),
-                    'previous_config_status': snap['config_status'], 'log': str(folder)})
-        rebooting = True; device.normal_reboot(telnet, record)
-    except Exception as error:
-        if isinstance(error, device.NativeRebootRejected): rebooting = False
+            after = {**before, 'options': properties(profile, phase).hex()}
+            transaction = prepare(action, profile, phase, before, after, state, snap, journal['recovery'], owner)
+        persist_remote(ftp, telnet, transaction, owner)
+        # /tmp is volatile on the supported QNX image. An absent marker is only
+        # accepted for a durably recorded pending reboot, never a prepared write.
+        ftp.storbinary('STOR ' + transaction['marker'], io.BytesIO(transaction['id'].encode()))
+        device.require(device.fetch(ftp, transaction['marker']) == transaction['id'].encode(), 'Boot marker readback failed')
+        apply_images(ftp, telnet, transaction['after'], transaction['id'], owner)
+        checkpoint(transaction, status='pending')
+        persist_remote(ftp, telnet, transaction, owner)
+        save_state(state_for(transaction))
+        rebooting = True
+        device.normal_reboot(telnet, record)
+        return {'status': 'pending', 'phase': transaction['phase']}
+    except (Exception, KeyboardInterrupt) as error:
+        if isinstance(error, device.NativeRebootRejected):
+            rebooting = False
+        # Record must never prevent restoring a known preimage.
         record('failed', error=repr(error), reboot_requested=rebooting)
-        if changed and not rebooting and receipt is not None:
-            restore(ftp, telnet, receipt)
-            save_state(state)
-            record('incoming_configuration_restored')
-        elif changed and not rebooting:
-            if incoming_options is None:
-                if device.fetch(ftp, OPTIONS, True) is not None: ftp.delete(OPTIONS)
-            else:
-                ftp.storbinary('STOR ' + OPTIONS, io.BytesIO(incoming_options))
-                device.require(device.fetch(ftp, OPTIONS) == incoming_options, 'Previous phase settings were not restored')
-            device.shell(telnet, '/ffs/sbin/sync')
-            save_state(state)
-            record('accepted_phase_settings_restored')
+        if transaction is not None and transaction['action'] != 'rollback' and not rebooting:
+            try:
+                cleanup_stages(ftp, telnet, transaction, owner)
+                apply_images(ftp, telnet, transaction['before'], transaction['id'], owner)
+                checkpoint(transaction, status='aborted')
+                persist_remote(ftp, telnet, transaction, owner)
+                save_state(transaction['state_before'])
+                record('incoming_configuration_restored')
+                if transaction['action'] == 'install-disabled':
+                    release(ftp, telnet, owner); locked = False
+                raise RetryableError('Previous files restored. The same step may be retried: ' + str(error)) from error
+            except RetryableError:
+                raise
+            except (Exception, KeyboardInterrupt) as recovery_error:
+                record('recovery_required', error=repr(recovery_error))
+                raise RuntimeError('Recovery incomplete. Keep this folder and run --rollback when service access returns. ' + str(error)) from recovery_error
+        if transaction is None and action == 'install-disabled':
+            pending = durable.load(local('transaction.json'))
+            if pending and pending['status'] not in ('accepted', 'aborted'):
+                raise RuntimeError('An incomplete transaction is recorded. Keep this folder and use --rollback.') from error
+            if locked:
+                try:
+                    release(ftp, telnet, owner)
+                except Exception:
+                    pass
+            raise RetryableError('No live installation files were written. Correct the problem and retry: ' + str(error)) from error
         raise
     finally:
-        if telnet is not None: telnet.close()
+        if telnet is not None:
+            try: telnet.close()
+            except Exception: pass
         if ftp is not None:
             try: ftp.quit()
             except Exception: ftp.close()
@@ -394,3 +740,5 @@ if __name__ == '__main__':
     elif not args.live: parser.error('--live required')
     elif args.profile is None: parser.error('--profile is required')
     else: run(args.action, selection.load_profile(args.profile))
+
+

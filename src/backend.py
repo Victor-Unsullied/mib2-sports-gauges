@@ -31,4 +31,4 @@ def host_address(host):
 
 def execute(action, config, language, host):
     transport.ADDRESS = host_address(host)
-    runtime.run(action, profile(config, language, True))
+    return runtime.run(action, profile(config, language, True))
