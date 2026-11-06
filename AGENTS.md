@@ -1,6 +1,6 @@
 # MIB2 Sports Gauges agent guide
 
-The repository owner developed this patch for their own 2015 Golf 7 Highline with a CXSA engine and manual transmission. A Delphi MIB2 retrofit left some Sport HMI gauges malfunctioning. The reference unit is Delphi 874B, Train `MST2_EU_VW_P0635D`, MU `0757`.
+The patch was developed for a 2015 Golf 7 Highline with a CXSA engine and manual transmission. A Delphi MIB2 retrofit left some Sport HMI gauges malfunctioning. The reference unit is Delphi 874B, Train `MST2_EU_VW_P0635D`, MU `0757`.
 
 ## Check the unit you are working with
 
